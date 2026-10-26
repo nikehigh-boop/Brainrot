@@ -4,10 +4,11 @@ Steal the Brainrot (Fortnite) tracker: a static page plus a few small Vercel fun
 Live at https://brainrotdex.vercel.app · pushes to `main` deploy automatically.
 
 ```
-index.html       the whole app (data, art and splash are embedded)
+index.html       the whole app (data and splash embedded; art and sounds live in a/)
+a/               brainrot art, icons and sounds, named by content hash (cached for a year)
 stats.html       private visitor stats page (/stats, needs the admin token)
 feed.json        bundled snapshot of the live feed (used until the first update)
-sw.js            service worker for push alerts
+sw.js            service worker: push alerts, offline copy, art cache
 api/config.js    hands the browser the Clerk publishable key
 api/state.js     GET/PUT a signed-in player's progress (Upstash Redis)
 api/feed.js      GET live feed · POST updates (admin token) · schedules timed alerts
