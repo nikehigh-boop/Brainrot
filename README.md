@@ -15,6 +15,7 @@ api/feed.js      GET live feed · POST updates (admin token) · schedules timed 
 api/notify.js    sends push alerts (called by QStash at the scheduled time)
 api/push.js      subscribe / unsubscribe a device for alerts
 api/stats.js     anonymous visit counter (POST) · totals (GET, admin token)
+api/discord.js   reads followed STB channels through your bot; ?sync=1 turns Admin Machine posts into rolls
 lib/             Redis, auth, push, alert and scheduling helpers
 ```
 
