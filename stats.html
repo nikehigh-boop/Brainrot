@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Brainrot Dex stats</title>
+<link rel="icon" type="image/png" href="/favicon-32.png?v=3">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wdth,wght@8..144,25..151,100..1000&family=Roboto+Mono:wght@500;700&display=swap">
+<style>
+:root{--bg:#0b0c09;--panel:#16180f;--line:#2b2e25;--ink:#e3e4da;--mute:#a7ab9a;--lime:#c5f33c;--mag:#ff3df0;--cyan:#3df0ff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "Roboto Flex",system-ui,sans-serif;padding:max(24px,env(safe-area-inset-top)) 16px 40px}
+main{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{margin:0;font-weight:900;font-stretch:125%;font-size:30px;display:flex;align-items:center;gap:12px}
+h1 img{width:40px;height:40px;border-radius:10px}
+.sub{color:var(--mute);font-size:13px}
+.key{display:flex;gap:8px;flex-wrap:wrap}
+.key input{flex:1 1 240px;min-width:0;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:500 14px "Roboto Mono",monospace}
+button{padding:12px 18px;border-radius:999px;border:0;background:var(--lime);color:#1f2b00;font:800 14px "Roboto Flex",sans-serif;cursor:pointer;min-height:44px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px 18px}
+.card b{display:block;font-weight:900;font-stretch:120%;font-size:34px;font-variant-numeric:tabular-nums;line-height:1.1}
+.card span{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.chart{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px}
+.bars{display:flex;align-items:flex-end;gap:4px;height:180px;margin-top:12px}
+.bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;min-width:0;height:100%}
+.bar i{display:block;width:100%;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,var(--lime),#7f9e1f);min-height:2px}
+.bar small{font-size:10px;color:var(--mute);font-family:"Roboto Mono",monospace}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-size:14px}
+th{color:var(--mute);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+td.n,th.n{text-align:right}
+.err{color:#ffb4ab}
+</style>
+</head>
+<body>
+<main>
+  <h1><img src="/icon-192.png?v=3" alt="">Brainrot Dex stats</h1>
+  <p class="sub" style="margin:-10px 0 0">Private counts from the app's own database. A visitor is one browser or phone; counting started Oct 26, 2026. Days are Eastern time.</p>
+  <form class="key" id="f">
+    <label class="sub" for="k" style="flex-basis:100%">Admin key</label>
+    <input id="k" type="password" autocomplete="off" placeholder="Paste your admin key">
+    <button type="submit">Show stats</button>
+  </form>
+  <p class="sub err" id="err" hidden></p>
+  <section id="out" hidden>
+    <div class="cards">
+      <div class="card"><span>Unique visitors</span><b id="c1">0</b></div>
+      <div class="card"><span>Today</span><b id="c2">0</b></div>
+      <div class="card"><span>Home Screen installs</span><b id="c3">0</b></div>
+      <div class="card"><span>Signed-in players</span><b id="c4">0</b></div>
+      <div class="card"><span>Alert devices</span><b id="c5">0</b></div>
+    </div>
+    <div class="chart" style="margin-top:12px"><span class="sub">Visitors per day, last 30 days</span><div class="bars" id="bars"></div></div>
+    <div class="chart" style="margin-top:12px;overflow-x:auto">
+      <table><thead><tr><th>Day</th><th class="n">Visitors</th><th class="n">Views</th><th class="n">iPhone</th><th class="n">Android</th><th class="n">Desktop</th></tr></thead><tbody id="rows"></tbody></table>
+    </div>
+  </section>
+</main>
+<script>
+var K='bd.adminKey',f=document.getElementById('f'),k=document.getElementById('k');
+try{k.value=localStorage.getItem(K)||''}catch(e){}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+async function load(){var e=document.getElementById('err');e.hidden=true;
+  try{var r=await fetch('/api/stats',{headers:{Authorization:'Bearer '+k.value.trim()}});if(r.status===401)throw new Error('That key was not accepted.');if(!r.ok)throw new Error('Could not load stats ('+r.status+').');
+    var d=await r.json();try{localStorage.setItem(K,k.value.trim())}catch(x){}
+    document.getElementById('c1').textContent=(d.visitors||0).toLocaleString();document.getElementById('c2').textContent=((d.daily[0]||{}).visitors||0).toLocaleString();
+    document.getElementById('c3').textContent=(d.installed||0).toLocaleString();document.getElementById('c4').textContent=(d.signedIn||0).toLocaleString();document.getElementById('c5').textContent=(d.pushDevices||0).toLocaleString();
+    var days=d.daily.slice().reverse(),max=Math.max(1,Math.max.apply(null,days.map(function(x){return x.visitors})));
+    document.getElementById('bars').innerHTML=days.map(function(x){return '<div class="bar" title="'+esc(x.day)+': '+x.visitors+'"><i style="height:'+(x.visitors/max*100)+'%"></i><small>'+esc(x.day.slice(8))+'</small></div>'}).join('');
+    document.getElementById('rows').innerHTML=d.daily.filter(function(x){return x.views>0}).map(function(x){var p=x.platforms||{};return '<tr><td>'+esc(x.day)+'</td><td class="n">'+x.visitors+'</td><td class="n">'+x.views+'</td><td class="n">'+(p.ios||0)+'</td><td class="n">'+(p.android||0)+'</td><td class="n">'+(p.desktop||0)+'</td></tr>'}).join('')||'<tr><td colspan="6" class="sub">No visits counted yet.</td></tr>';
+    document.getElementById('out').hidden=false}catch(x){e.textContent=x.message;e.hidden=false}}
+f.addEventListener('submit',function(ev){ev.preventDefault();load()});if(k.value)load();
+</script>
+</body>
+</html>

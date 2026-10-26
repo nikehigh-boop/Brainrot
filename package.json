@@ -1,0 +1,14 @@
+{
+  "name": "brainrot-dex",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@clerk/backend": "3.23.2",
+    "@upstash/redis": "1.39.0",
+    "web-push": "3.6.7",
+    "@upstash/qstash": "2.12.0"
+  }
+}
