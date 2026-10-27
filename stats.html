@@ -32,6 +32,20 @@ th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-s
 th{color:var(--mute);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
 td.n,th.n{text-align:right}
 .err{color:#ffb4ab}
+h2{margin:8px 0 0;font-weight:900;font-stretch:120%;font-size:22px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row input{flex:1 1 200px;min-width:0;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;min-height:44px}
+.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.demo{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.list{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:7px}
+.list li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;font-size:14px}
+.list li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list li b{font-family:"Roboto Mono",monospace;font-size:13px;color:var(--mute)}
+.list li i{grid-column:1/-1;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.list li i::after{content:"";display:block;height:100%;width:var(--w);background:var(--c,var(--lime));border-radius:3px}
+.users td{font-size:13px;white-space:nowrap}
+.users td.em{font-family:"Roboto Mono",monospace;font-size:12.5px}
+.hrs{height:120px}
 </style>
 </head>
 <body>
@@ -53,6 +67,17 @@ td.n,th.n{text-align:right}
       <div class="card"><span>Alert devices</span><b id="c5">0</b></div>
     </div>
     <div class="chart" style="margin-top:12px"><span class="sub">Visitors per day, last 30 days</span><div class="bars" id="bars"></div></div>
+    <h2 style="margin-top:24px">Signed-up players <span class="sub" id="ucount"></span></h2>
+    <div class="chart" style="margin-top:12px">
+      <div class="row"><input id="uq" type="search" placeholder="Search email, name or place" aria-label="Search players"><button type="button" class="ghost" id="ucopy">Copy emails</button><button type="button" class="ghost" id="ucsv">Download CSV</button></div>
+      <p class="sub err" id="uerr" hidden></p>
+      <div style="overflow-x:auto;margin-top:10px"><table class="users"><thead><tr><th>Email</th><th>Name</th><th>Signed in with</th><th>Location</th><th>Joined</th><th>Last active</th></tr></thead><tbody id="urows"></tbody></table></div>
+      <p class="sub" style="margin:10px 0 0">Emails come from your sign-in service (Clerk). Location is where a player last opened the app signed in, so older accounts fill in as they come back.</p>
+    </div>
+    <h2 style="margin-top:24px">Demographics</h2>
+    <p class="sub" style="margin:4px 0 0">Unique visitors, counted once each from Oct 27, 2026. Location is approximate, from the visitor's internet connection. The app doesn't ask for age or gender, so those aren't shown.</p>
+    <div class="demo" style="margin-top:12px" id="demo"></div>
+    <div class="chart" style="margin-top:12px"><span class="sub">Visits by time of day (Eastern)</span><div class="bars hrs" id="hrs"></div></div>
     <div class="chart" style="margin-top:12px;overflow-x:auto">
       <table><thead><tr><th>Day</th><th class="n">Visitors</th><th class="n">Views</th><th class="n">iPhone</th><th class="n">Android</th><th class="n">Desktop</th></tr></thead><tbody id="rows"></tbody></table>
     </div>
@@ -70,7 +95,32 @@ async function load(){var e=document.getElementById('err');e.hidden=true;
     var days=d.daily.slice().reverse(),max=Math.max(1,Math.max.apply(null,days.map(function(x){return x.visitors})));
     document.getElementById('bars').innerHTML=days.map(function(x){return '<div class="bar" title="'+esc(x.day)+': '+x.visitors+'"><i style="height:'+(x.visitors/max*100)+'%"></i><small>'+esc(x.day.slice(8))+'</small></div>'}).join('');
     document.getElementById('rows').innerHTML=d.daily.filter(function(x){return x.views>0}).map(function(x){var p=x.platforms||{};return '<tr><td>'+esc(x.day)+'</td><td class="n">'+x.visitors+'</td><td class="n">'+x.views+'</td><td class="n">'+(p.ios||0)+'</td><td class="n">'+(p.android||0)+'</td><td class="n">'+(p.desktop||0)+'</td></tr>'}).join('')||'<tr><td colspan="6" class="sub">No visits counted yet.</td></tr>';
+    renderUsers(d);renderDemo(d);
     document.getElementById('out').hidden=false}catch(x){e.textContent=x.message;e.hidden=false}}
+var U=[],uq=document.getElementById('uq');
+function dt(t){return t?new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'—'}
+function ago(t){if(!t)return'—';var m=(Date.now()-t)/6e4;return m<60?Math.max(1,Math.round(m))+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' d ago'}
+function shownUsers(){var q=uq.value.trim().toLowerCase();return U.filter(function(u){return !q||(u.email+' '+u.name+' '+u.place+' '+u.via).toLowerCase().indexOf(q)>=0})}
+function drawUsers(){var L=shownUsers();document.getElementById('urows').innerHTML=L.map(function(u){return '<tr><td class="em">'+esc(u.email||'—')+'</td><td>'+esc(u.name||'—')+'</td><td>'+esc(u.via)+'</td><td>'+esc(u.place||'—')+'</td><td>'+dt(u.joined)+'</td><td>'+ago(u.lastActive||u.lastSignIn)+'</td></tr>'}).join('')||'<tr><td colspan="6" class="sub">No players match.</td></tr>'}
+function renderUsers(d){U=d.users||[];var ue=document.getElementById('uerr');ue.hidden=!d.usersError;ue.textContent=d.usersError?'Could not load every player from Clerk: '+d.usersError:'';
+  var uniq={};U.forEach(function(u){if(u.email)uniq[u.email.toLowerCase()]=1});
+  document.getElementById('ucount').textContent=U.length+' accounts · '+Object.keys(uniq).length+' unique emails';drawUsers()}
+uq.addEventListener('input',drawUsers);
+document.getElementById('ucopy').addEventListener('click',function(){var t=shownUsers().map(function(u){return u.email}).filter(Boolean).join('\n');var b=this;navigator.clipboard.writeText(t).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy emails'},1500)})});
+document.getElementById('ucsv').addEventListener('click',function(){var q=function(x){return '"'+String(x==null?'':x).replace(/"/g,'""')+'"'};
+  var csv=['email,name,signed_in_with,location,joined,last_active'].concat(shownUsers().map(function(u){return [u.email,u.name,u.via,u.place,u.joined?new Date(u.joined).toISOString().slice(0,10):'',(u.lastActive||u.lastSignIn)?new Date(u.lastActive||u.lastSignIn).toISOString().slice(0,10):''].map(q).join(',')})).join('\n');
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='brainrot-dex-players.csv';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},2000)});
+var CN;try{CN=new Intl.DisplayNames(['en'],{type:'region'})}catch(x){}
+var LN;try{LN=new Intl.DisplayNames(['en'],{type:'language'})}catch(x){}
+function cname(c){try{return c&&c!=='??'&&CN?CN.of(c):'Unknown'}catch(x){return c}}
+function lname(l){try{return l&&l!=='??'&&LN?LN.of(l):'Unknown'}catch(x){return l}}
+function block(title,obj,label,top,color){var E=Object.entries(obj||{}).map(function(e){return [e[0],+e[1]]}).sort(function(a,b){return b[1]-a[1]});var tot=E.reduce(function(s,e){return s+e[1]},0),max=E.length?E[0][1]:1;
+  return '<div class="chart"><span class="sub">'+esc(title)+'</span>'+(E.length?'<ul class="list">'+E.slice(0,top||10).map(function(e){return '<li><span>'+esc(label?label(e[0]):e[0])+'</span><b>'+e[1]+' · '+Math.round(e[1]/tot*100)+'%</b><i style="--w:'+(e[1]/max*100)+'%'+(color?';--c:'+color:'')+'"></i></li>'}).join('')+'</ul>'+(E.length>(top||10)?'<p class="sub" style="margin:8px 0 0">+'+(E.length-(top||10))+' more</p>':''):'<p class="sub" style="margin:8px 0 0">No data yet.</p>')+'</div>'}
+function renderDemo(d){var m=d.demo||{};
+  var us={};Object.entries(m.region||{}).forEach(function(e){if(e[0].indexOf('US-')===0)us[e[0].slice(3)]=e[1]});
+  document.getElementById('demo').innerHTML=block('Countries',m.country,cname,10)+block('US states',us,null,10,'var(--cyan)')+block('Cities',m.city,null,12,'var(--cyan)')+block('Languages',m.lang,lname,8,'var(--mag)')+block('Devices',m.os,null,8,'var(--mag)')+block('Browsers',m.browser,null,8,'var(--mag)')+block('Came from',m.ref,null,10);
+  var h=m.hour||{},hv=[];for(var i=0;i<24;i++)hv.push(+(h[i]||0));var hm=Math.max(1,Math.max.apply(null,hv));
+  document.getElementById('hrs').innerHTML=hv.map(function(v,i){return '<div class="bar" title="'+(i%12||12)+(i<12?' am':' pm')+': '+v+'"><i style="height:'+(v/hm*100)+'%"></i><small>'+(i%6?'':(i%12||12)+(i<12?'a':'p'))+'</small></div>'}).join('')}
 f.addEventListener('submit',function(ev){ev.preventDefault();load()});if(k.value)load();
 </script>
 </body>

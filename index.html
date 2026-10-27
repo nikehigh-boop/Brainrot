@@ -2002,7 +2002,12 @@ try{if('serviceWorker' in navigator)addEventListener('load',function(){navigator
 /* v7.2 private visit counter (anonymous id, no third parties) */
 (function(){try{if(sessionStorage.getItem('bd.hit'))return;sessionStorage.setItem('bd.hit','1');var k='bd.vid',v=localStorage.getItem(k);if(!v){v=(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));localStorage.setItem(k,v)}
 var ua=navigator.userAgent||'',p=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)?'ios':/Android/.test(ua)?'android':'desktop';
-var s=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;var body=JSON.stringify({v:v,p:p,s:s?1:0});
+var s=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+var os=/iPad/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)?'iPadOS':/iPhone|iPod/.test(ua)?'iOS':/Android/.test(ua)?'Android':/CrOS/.test(ua)?'ChromeOS':/Windows/.test(ua)?'Windows':/Mac OS X/.test(ua)?'macOS':/Linux/.test(ua)?'Linux':'other';
+var br=/FBAN|FBAV|Instagram|TikTok|Snapchat|Discord|Line\//.test(ua)?'In-app':/SamsungBrowser/.test(ua)?'Samsung':/Edg\//.test(ua)?'Edge':/OPR\//.test(ua)?'Opera':/Firefox|FxiOS/.test(ua)?'Firefox':/Chrome|CriOS/.test(ua)?'Chrome':/Safari/.test(ua)?'Safari':'other';
+var rf='';try{var rh=document.referrer?new URL(document.referrer).hostname.replace(/^www\./,''):'';if(rh&&rh!==location.hostname)rf=rh}catch(x){}
+var q=new URLSearchParams(location.search);if(q.get('utm_source'))rf=q.get('utm_source');
+var body=JSON.stringify({v:v,p:p,s:s?1:0,os:os,b:br,l:(navigator.language||'').slice(0,12),r:rf});
 if(navigator.sendBeacon)navigator.sendBeacon('/api/stats',new Blob([body],{type:'text/plain'}));else fetch('/api/stats',{method:'POST',body:body,keepalive:true})}catch(e){}})();</script>
 </body><script>
 /* v5.4 merge: Close bar on the detail sheet + keep scroll position when a popup re-renders */
@@ -2038,7 +2043,7 @@ if(navigator.sendBeacon)navigator.sendBeacon('/api/stats',new Blob([body],{type:
 <script>
 /* v6.2 diagnostics shown in the progress (cloud) dialog */
 (function(){function d(){var e=document.getElementById('bkdiag');if(!e)return;var vv=window.visualViewport;var cs=getComputedStyle(document.documentElement);var s=document.getElementById('screen');var r=s?s.getBoundingClientRect():null;
-e.textContent='Build 7.7 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
+e.textContent='Build 7.8 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
 document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('#syncbtn'))setTimeout(d,50)});})();
 </script>
 <script>

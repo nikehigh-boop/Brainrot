@@ -1,6 +1,7 @@
 // A signed-in player's saved progress. GET -> {state}, PUT {state} -> {ok}
 import { redis } from '../lib/redis.js';
 import { userId } from '../lib/auth.js';
+import { geo } from '../lib/geo.js';
 
 const MAX = 200_000; // bytes
 
@@ -10,7 +11,7 @@ export default async function handler(req, res) {
   const uid = await userId(req);
   if (!uid) return res.status(401).json({ error: 'sign in first' });
   const key = `state:${uid}`;
-  try { await redis.sadd('users:all', uid); } catch {}
+  try { await Promise.all([redis.sadd('users:all', uid), redis.hset('user:geo', { [uid]: { ...geo(req), at: new Date().toISOString().slice(0, 10) } })]); } catch {}
   try {
     if (req.method === 'GET') return res.status(200).json({ state: (await redis.get(key)) ?? null });
     if (req.method === 'PUT') {
