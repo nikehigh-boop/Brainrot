@@ -3,8 +3,12 @@
 //   GET ?n=<brainrot>   -> { name, reports: [{m, price, kind, at}], summary }
 //   POST {n, m, price, kind, v}  -> adds one report (anonymous id v; 5 per id and 15 per IP a day)
 //   DELETE ?n=<brainrot>&at=<iso>  (admin token) -> removes one report
+//   GET ?gf=1           -> Gameflip Steal the Brainrot prices, refreshed daily
+//   GET ?sync=gameflip  -> refresh them (Vercel cron, admin token, or anyone at most every 6 hours)
 import { redis } from '../lib/redis.js';
 import { isAdmin } from '../lib/admin.js';
+import { env } from '../lib/env.js';
+import { pullGameflip, dexNames } from '../lib/gameflip.js';
 
 const KINDS = ['sold', 'bought', 'listed'];
 const MAX_PER_NAME = 100;
@@ -29,11 +33,31 @@ export function summarize(reports) {
   };
 }
 
+async function syncGameflip(req) {
+  const cron = env('CRON_SECRET');
+  const auth = String(req.headers.authorization || '');
+  const trusted = isAdmin(auth) || (cron && auth === `Bearer ${cron}`);
+  if (!trusted && !(await redis.set('mkt:gf:lock', 1, { nx: true, ex: 6 * 3600 }))) return { ok: false, reason: 'refreshed recently' };
+  const origin = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`;
+  const { names, mutations } = await dexNames(origin);
+  const gf = await pullGameflip(names, mutations);
+  await redis.set('mkt:gf', gf);
+  return { ok: true, scanned: gf.scanned, kept: gf.kept, brainrots: gf.brainrots };
+}
+
 async function readReports(n) { return ((await redis.lrange(keyOf(n), 0, MAX_PER_NAME - 1)) || []).map((x) => (typeof x === 'string' ? JSON.parse(x) : x)); }
 
 export default async function handler(req, res) {
   if (!redis) return res.status(503).json({ error: 'storage not configured' });
   try {
+    if (req.method === 'GET' && req.query && req.query.sync === 'gameflip') {
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(200).json(await syncGameflip(req));
+    }
+    if (req.method === 'GET' && req.query && req.query.gf) {
+      res.setHeader('Cache-Control', 'public, s-maxage=1800, stale-while-revalidate=86400');
+      return res.status(200).json((await redis.get('mkt:gf')) || { items: [] });
+    }
     if (req.method === 'GET') {
       res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
       const n = cleanName(req.query && req.query.n);

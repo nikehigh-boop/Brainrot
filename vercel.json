@@ -24,5 +24,16 @@
       "source": "/stats",
       "destination": "/stats.html"
     }
-  ]
+  ],
+  "crons": [
+    {
+      "path": "/api/market?sync=gameflip",
+      "schedule": "17 10 * * *"
+    }
+  ],
+  "functions": {
+    "api/market.js": {
+      "maxDuration": 60
+    }
+  }
 }

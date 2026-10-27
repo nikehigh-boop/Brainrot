@@ -842,6 +842,14 @@ nav.tabs a[data-tab="events"] .n{background:transparent;color:var(--live);font-s
 @media (max-width:760px){.trade{grid-template-columns:minmax(0,1fr)}}
 
 /* v7.5 market value */
+/* v7.7 market */
+.card .mprice{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--live);font-variant-numeric:tabular-nums}
+.mkt-sec{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:-4px}
+.mkt-muts{display:flex;flex-wrap:wrap;gap:6px}
+.mkt-muts .mkt-mut{padding:6px 10px;border-radius:10px;background:var(--panel);border:1px solid var(--line);font-size:13px}
+.mkt-muts b{font-size:13px;color:var(--ink)}
+.mkt-muts em{font-style:normal;font-size:11px;color:var(--dim);font-family:var(--mono)}
+
 .mkt{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:18px;background:var(--deep);border:1px solid var(--line)}
 .mkt-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.mkt-h h3{margin:0}
 .mkt-tag{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
@@ -1014,7 +1022,7 @@ nav.tabs a[data-tab="events"] .n{background:transparent;color:var(--live);font-s
       <label class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input id="q" type="search" placeholder="Search brainrots…" aria-label="Search brainrots" autocomplete="off"></label>
       <select id="sort" aria-label="Sort">
-        <option value="no">Index order</option><option value="inc">Income, high to low</option><option value="cost">Price, high to low</option><option value="pay">Fastest payback</option><option value="az">Name A–Z</option><option value="new">Newest first</option>
+        <option value="no">Index order</option><option value="inc">Income, high to low</option><option value="cost">Price, high to low</option><option value="pay">Fastest payback</option><option value="az">Name A–Z</option><option value="new">Newest first</option><option value="mkt">Market value, high to low</option>
       </select>
       <div class="toggle" role="group" aria-label="Collection filter">
         <button id="f-all" aria-pressed="true">All</button><button id="f-own" aria-pressed="false">Caught</button><button id="f-miss" aria-pressed="false">Missing</button>
@@ -1398,7 +1406,7 @@ function pulse(){const pool=B.filter(isPool),owned=pool.filter(b=>CAUGHT.has(b.n
 let fR=new Set(),fOwn='all',fSt=null;
 const counts={};B.forEach(b=>counts[b.r]=(counts[b.r]||0)+1);
 $('#chips').innerHTML=D.rarities.filter(r=>counts[r.id]).map(r=>`<button class="chip" data-r="${r.id}" aria-pressed="false" style="--c:${r.c}"><i></i>${r.label}<span class="ct">${counts[r.id]}</span></button>`).join('');
-const STF={new:['New since Sept',b=>b.addedN>=919||b.flags.includes('new')],halloween:['Halloween limited',b=>b.flags.includes('halloween')],sound:['Has sound',b=>!!D.snd[b.name]],retired:['Retired',b=>b.retired],noart:['Needs art',b=>!IMG[b.name]],vault:['Vault · removed',()=>true]};
+const STF={new:['New since Sept',b=>b.addedN>=919||b.flags.includes('new')],halloween:['Halloween limited',b=>b.flags.includes('halloween')],sound:['Has sound',b=>!!D.snd[b.name]],price:['Has market price',b=>typeof mkEstimate==='function'&&!!mkEstimate(b.name)],retired:['Retired',b=>b.retired],noart:['Needs art',b=>!IMG[b.name]],vault:['Vault · removed',()=>true]};
 function stchips(){$('#stchips').innerHTML=Object.entries(STF).map(([k,[l,f]])=>`<button class="chip" data-s="${k}" aria-pressed="${fSt===k}" style="--c:var(--zap)">${l}<span class="ct">${k==='vault'?VB.length:B.filter(f).length}</span></button>`).join('')}
 stchips();
 $('#chips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;const r=c.dataset.r;fR.has(r)?fR.delete(r):fR.add(r);c.setAttribute('aria-pressed',fR.has(r));render()});
@@ -1411,13 +1419,13 @@ function card(b){const r=R[b.r]||R.common,own=CAUGHT.has(b.name),n=IDX?S.inv.fil
   return `<div class="card ${own?'':'miss'} ${b.retired?'retired':''}" data-r="${b.r}" style="--c:${r.c}" role="button" tabindex="0" data-name="${esc(b.name)}" aria-label="${esc(b.display)}, ${r.label}">
   <div class="art ${b.art==='snap'?'snap':''}"><span class="no">${num(b)}</span><span class="tier">${r.label}</span>${art(b)}${flag(b)}
   ${canIdx?`<button class="catch" aria-pressed="${own}" aria-label="${own?'Edit indexed copies of ':'Index '}${esc(b.display)}" data-catch="${esc(b.name)}">${own&&n>1?`<b>${n}</b>`:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00391f" stroke-width="4"><path d="M5 12l5 5L20 7"/></svg>'}</button>`:''}</div>
-  <div class="meta"><div class="nm">${esc(b.display)}</div><div class="inc">${b.income!=null?'$'+fmt(b.income)+'<span>/s</span>':'<span>stats pending</span>'}</div></div></div>`}
+  <div class="meta"><div class="nm">${esc(b.display)}</div><div class="inc">${b.income!=null?'$'+fmt(b.income)+'<span>/s</span>':'<span>stats pending</span>'}</div>${typeof mkTag==='function'?mkTag(b.name):''}</div></div>`}
 function render(){const q=norm($('#q').value),s=$('#sort').value;
   const base=fSt==='vault'?VB:B;
   let L=base.filter(b=>(!fR.size||fR.has(b.r))&&(!q||norm(b.display).includes(q))&&(!fSt||STF[fSt][1](b))&&(fOwn==='all'||(fOwn==='own'?CAUGHT.has(b.name):!CAUGHT.has(b.name))));
   const nz=(v,d)=>v==null?d:v;
   if(s==='inc')L.sort((a,b)=>nz(b.income,-1)-nz(a.income,-1));if(s==='cost')L.sort((a,b)=>nz(b.cost,-1)-nz(a.cost,-1));
-  if(s==='pay')L.sort((a,b)=>nz(a.pay,1e99)-nz(b.pay,1e99));if(s==='az')L.sort((a,b)=>a.display.localeCompare(b.display));if(s==='new')L.sort((a,b)=>b.addedN-a.addedN);
+  if(s==='pay')L.sort((a,b)=>nz(a.pay,1e99)-nz(b.pay,1e99));if(s==='az')L.sort((a,b)=>a.display.localeCompare(b.display));if(s==='new')L.sort((a,b)=>b.addedN-a.addedN);if(s==='mkt'){const mv=x=>{const e=typeof mkEstimate==='function'&&mkEstimate(x.name);return e?e.v:-1};L.sort((a,b)=>mv(b)-mv(a))}
   $('#grid').innerHTML=(fSt==='vault'?`<div class="vaultnote" style="grid-column:1/-1"><b>The Vault.</b> ${VB.length} brainrots removed from the game on July 18. They no longer spawn and don't count toward your indexes. Stats are from STB Hub's March datamine.</div>`:'')+(L.length?L.map(card).join(''):`<div class="empty" style="grid-column:1/-1">No brainrots match. Clear a filter or try another name.</div>`)}
 $('#grid').addEventListener('click',e=>{const c=e.target.closest('[data-catch]');if(c){e.stopPropagation();openPicker(c.dataset.catch);return}const k=e.target.closest('.card');if(k)openSheet(k.dataset.name)});
 $('#grid').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('card')){e.preventDefault();openSheet(e.target.dataset.name)}});
@@ -1657,27 +1665,43 @@ $('#t-trade').addEventListener('click',e=>{const a=e.target.closest('[data-tadd]
 $('#t-trade').addEventListener('change',e=>{const m=e.target.closest('[data-tm]');if(m){const [k,i]=m.dataset.tm.split(':').map(Number);if(TR.s[k][i]&&mutBy[m.value]){TR.s[k][i].m=m.value;renderTrade()}}});
 renderTrade();
 
-/* v7.5 · Market value: hand-collected snapshot + community price reports (no outside APIs) */
-var MK={snap:null,sum:{},detail:{}};
+/* v7.7 · Market value: daily Gameflip Steal the Brainrot prices + eBay snapshot + player reports */
+var MK={snap:null,sum:{},detail:{},gf:null,gfBy:{},est:{}};
 var usd=n=>n==null?'—':'$'+(n>=100?Math.round(n):n.toFixed(2).replace(/\.00$/,''));
 function mkMedian(a){const s=[...a].sort((x,y)=>x-y),m=s.length>>1;return s.length?(s.length%2?s[m]:(s[m-1]+s[m])/2):null}
-function mkSnap(name){return MK.snap?MK.snap.items.filter(i=>i.n===name):[]}
-// One number per brainrot: sold prices count double, listings once; community reports blend in by their own median.
-function mkEstimate(name){const sn=mkSnap(name),sm=MK.sum[name];const pts=[];sn.forEach(i=>{pts.push(i.price);if(i.kind==='sold')pts.push(i.price)});
+function mkRows(name){const out=[];if(!MK)return out;
+  if(MK.snap)MK.snap.items.forEach(i=>{if(i.n===name)out.push({m:i.m,price:i.price,kind:i.kind,src:i.src,url:i.url,note:i.note,at:MK.snap.asof})});
+  (MK.gfBy[name]||[]).forEach(i=>out.push({m:i.m,price:i.p,kind:i.k,src:'Gameflip',url:`https://gameflip.com/item/${encodeURIComponent(i.s)}/${encodeURIComponent(i.id)}`,at:i.at}));
+  return out}
+// Sold prices count double, listings once. Player reports blend in by their own median.
+// With a mutation, uses that mutation's prices when there are at least 2.
+function mkEstimate(name,mut){if(!MK)return null;const key=name+'|'+(mut||'');if(key in MK.est)return MK.est[key];
+  let rows=mkRows(name),sm=MK.sum[name],exact=false;
+  if(mut){const r2=rows.filter(r=>r.m===mut);if(r2.length>=2){rows=r2;sm=null;exact=true}}
+  const pts=[];rows.forEach(r=>{pts.push(r.price);if(r.kind==='sold')pts.push(r.price)});
   if(sm&&sm.median){for(let i=0;i<Math.min(sm.count,6);i++)pts.push(sm.median)}
-  if(!pts.length)return null;return {v:mkMedian(pts),n:sn.length+(sm?sm.count:0)}}
-async function mkLoad(){try{const [a,b]=await Promise.all([fetch('/market.json').then(r=>r.ok?r.json():null).catch(()=>null),fetch('/api/market').then(r=>r.ok?r.json():null).catch(()=>null)]);
+  return MK.est[key]=pts.length?{v:mkMedian(pts),n:rows.length+(sm?sm.count:0),exact}:null}
+function mkTag(name){if(!MK)return'';const e=mkEstimate(name);return e?`<div class="mprice" title="Typical market price">≈ ${usd(e.v)}</div>`:''}
+async function mkLoad(){try{const j=u=>fetch(u).then(r=>r.ok?r.json():null).catch(()=>null);const [a,b,g]=await Promise.all([j('/market.json'),j('/api/market'),j('/api/market?gf=1')]);
   if(a)MK.snap=a;if(b&&b.summary)Object.entries(b.summary).forEach(([k,v])=>{MK.sum[k]=typeof v==='string'?JSON.parse(v):v});
+  if(g&&g.items){MK.gf=g;MK.gfBy={};g.items.forEach(i=>(MK.gfBy[i.n]=MK.gfBy[i.n]||[]).push(i))}
+  MK.est={};stchips();render();
   if(sheetName&&$('#dlg').open)mkRender(sheetName);if(typeof renderTrade==='function')renderTrade()}catch(e){}}
 function mkVid(){try{let v=localStorage.getItem('bd.vid');if(!v){v=(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));localStorage.setItem('bd.vid',v)}return v}catch(e){return 'anon-'+Date.now()}}
 const KLBL={sold:'Sold',bought:'Bought',listed:'Listed'};
 function mkRender(name){const host=$('#dlgc .sheet .body');if(!host)return;let el=$('#mkt');if(!el){el=document.createElement('section');el.id='mkt';el.className='mkt';const foot=host.querySelector('.sfoot');foot?host.insertBefore(el,foot):host.appendChild(el)}
-  const b=BY[norm(name)],est=mkEstimate(name),sn=mkSnap(name),det=MK.detail[name],reps=det?det.reports.slice(0,8):[];
-  const rows=[...sn.map(i=>({m:i.m,price:i.price,kind:i.kind,src:i.src,url:i.url,note:i.note,at:MK.snap.asof})),...reps.map(r=>({m:r.m,price:r.price,kind:r.kind,src:'Player report',at:r.at.slice(0,10)}))];
+  const b=BY[norm(name)],est=mkEstimate(name),det=MK.detail[name],reps=det?det.reports.slice(0,20):[];
+  const all=[...mkRows(name),...reps.map(r=>({m:r.m,price:r.price,kind:r.kind,src:'Player report',at:r.at.slice(0,10)}))];
+  const grp={};all.forEach(r=>(grp[r.m]=grp[r.m]||[]).push(r.price));
+  const muts=Object.entries(grp).map(([m,p])=>({m,v:mkMedian(p),n:p.length})).sort((x,y)=>y.v-x.v);
+  const rank=r=>r.kind==='sold'?0:r.kind==='bought'?1:2;
+  const rows=[...all].sort((x,y)=>rank(x)-rank(y)||String(y.at).localeCompare(String(x.at))).slice(0,10);
+  const sw=m=>{const x=mutBy[m];return x&&/^#/.test(x.c)?x.c:'#8e9282'};
   el.innerHTML=`<div class="mkt-h"><h3>Market value</h3><span class="mkt-tag">Unofficial · USD</span></div>
     ${est?`<div class="mkt-big"><b>${usd(est.v)}</b><span>typical price · ${est.n} price${est.n>1?'s':''} found</span></div>`:`<p class="sub" style="margin:0">No prices found for ${esc(b?b.display:name)} yet. Seen one sell or listed? Add it below.</p>`}
-    ${rows.length?`<ul class="mkt-list">${rows.map(r=>{const m=mutBy[r.m];const sw=m&&/^#/.test(m.c)?m.c:'#8e9282';return `<li><span class="mkt-mut" style="--sw:${sw}"><i></i>${esc(r.m)}</span><b class="mono">${usd(r.price)}</b><span class="mkt-src">${KLBL[r.kind]||''} · ${r.url?`<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.src)} ↗</a>`:esc(r.src)}${r.note?` · ${esc(r.note)}`:''}</span></li>`}).join('')}</ul>`:''}
-    <p class="sub" style="margin:0">${MK.snap?`Snapshot of eBay and Gameflip listings from ${esc(MK.snap.asof)}, plus player reports. `:''}Price depends on mutation, traits and level.</p>
+    ${muts.length>1?`<div class="mkt-sec">By mutation</div><div class="mkt-muts">${muts.map(x=>`<span class="mkt-mut" style="--sw:${sw(x.m)}"><i></i>${esc(x.m)} <b class="mono">${usd(x.v)}</b><em>${x.n}</em></span>`).join('')}</div>`:''}
+    ${rows.length?`<div class="mkt-sec">Recent prices</div><ul class="mkt-list">${rows.map(r=>{return `<li><span class="mkt-mut" style="--sw:${sw(r.m)}"><i></i>${esc(r.m)}</span><b class="mono">${usd(r.price)}</b><span class="mkt-src">${KLBL[r.kind]||''}${r.at?` ${esc(String(r.at).slice(5).replace('-','/'))}`:''} · ${r.url?`<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.src)} ↗</a>`:esc(r.src)}${r.note?` · ${esc(r.note)}`:''}</span></li>`}).join('')}</ul>`:''}
+    <p class="sub" style="margin:0">${MK.gf&&MK.gf.asof?`Gameflip sales and listings, updated daily (last ${esc(new Date(MK.gf.asof).toLocaleDateString(undefined,{month:'short',day:'numeric'}))}). Only Fortnite Steal the Brainrot listings count: Go Up for Brainrots, Fight the Brainrot and Roblox listings are filtered out. `:''}${MK.snap?`Plus an eBay snapshot from ${esc(MK.snap.asof)} and player reports. `:''}Price depends on mutation, traits and level.</p>
     <details class="mkt-rep"><summary>Report a price</summary>
       <form id="mkform" class="mkt-form">
         <div class="field"><label for="mkm">Mutation</label><select id="mkm">${D.mutations.map(m=>`<option value="${esc(m.name)}">${esc(m.name)}</option>`).join('')}</select></div>
@@ -1691,11 +1715,11 @@ function mkRender(name){const host=$('#dlgc .sheet .body');if(!host)return;let e
     const btn=ev.target.querySelector('button');btn.disabled=true;
     try{const r=await fetch('/api/market',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({n:name,m:$('#mkm').value,price,kind:$('#mkk').value,v:mkVid()})});const j=await r.json().catch(()=>({}));
       if(!r.ok){toast(j.error||'Could not save that price');btn.disabled=false;return}
-      MK.sum[name]=j.summary;delete MK.detail[name];toast('Thanks! Price added');mkFetch(name)}catch(e){toast('No connection. Try again later.');btn.disabled=false}})}
-async function mkFetch(name){try{const r=await fetch('/api/market?n='+encodeURIComponent(name));if(r.ok){const j=await r.json();MK.detail[name]=j;if(j.summary)MK.sum[name]=j.summary}}catch(e){}if(sheetName===name&&$('#dlg').open)mkRender(name)}
+      MK.sum[name]=j.summary;MK.est={};delete MK.detail[name];toast('Thanks! Price added');mkFetch(name)}catch(e){toast('No connection. Try again later.');btn.disabled=false}})}
+async function mkFetch(name){try{const r=await fetch('/api/market?n='+encodeURIComponent(name));if(r.ok){const j=await r.json();MK.detail[name]=j;if(j.summary){MK.sum[name]=j.summary;MK.est={}}}}catch(e){}if(sheetName===name&&$('#dlg').open)mkRender(name)}
 const _openSheet=openSheet;openSheet=function(name,keep){_openSheet(name,keep);if(sheetName){mkRender(sheetName);if(!MK.detail[sheetName])mkFetch(sheetName)}};
 function mktSide(k){if(!MK)return;const el=$('#tmkt'+k);if(!el)return;const a=TR.s[k];if(!a.length){el.hidden=true;return}
-  let tot=0,c=0;a.forEach(x=>{const e=mkEstimate(x.n);if(e){tot+=e.v;c++}});
+  let tot=0,c=0;a.forEach(x=>{const e=mkEstimate(x.n,x.m);if(e){tot+=e.v;c++}});
   if(!c){el.hidden=true;return}el.hidden=false;el.textContent=`≈ ${usd(tot)} on the market${c<a.length?` (${c} of ${a.length} priced)`:''}`}
 mkLoad();
 
@@ -2014,7 +2038,7 @@ if(navigator.sendBeacon)navigator.sendBeacon('/api/stats',new Blob([body],{type:
 <script>
 /* v6.2 diagnostics shown in the progress (cloud) dialog */
 (function(){function d(){var e=document.getElementById('bkdiag');if(!e)return;var vv=window.visualViewport;var cs=getComputedStyle(document.documentElement);var s=document.getElementById('screen');var r=s?s.getBoundingClientRect():null;
-e.textContent='Build 7.6 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
+e.textContent='Build 7.7 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
 document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('#syncbtn'))setTimeout(d,50)});})();
 </script>
 <script>

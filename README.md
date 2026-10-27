@@ -17,6 +17,9 @@ api/push.js      subscribe / unsubscribe a device for alerts
 api/stats.js     anonymous visit counter (POST) · totals (GET, admin token)
 api/discord.js   reads followed STB channels through your bot; ?sync=1 turns Admin Machine posts into rolls
 api/market.js    community price reports (anonymous, rate limited) · market.json = hand-collected listing snapshot
+                 ?gf=1 daily Gameflip prices · ?sync=gameflip refresh (Vercel cron 10:17 UTC daily)
+lib/gameflip.js  Gameflip public search → Fortnite Steal the Brainrot only (skips Go Up for Brainrots,
+                 Fight the Brainrot, Grow a Brainrot, Roblox, bundles), matched to Dex names + mutations
 lib/             Redis, auth, push, alert and scheduling helpers
 ```
 
