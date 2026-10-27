@@ -53,8 +53,8 @@ h2{margin:8px 0 0;font-weight:900;font-stretch:120%;font-size:22px}
   <h1><img src="/icon-192.png?v=3" alt="">Brainrot Dex stats</h1>
   <p class="sub" style="margin:-10px 0 0">Private counts from the app's own database. A visitor is one browser or phone; counting started Oct 26, 2026. Days are Eastern time.</p>
   <form class="key" id="f">
-    <label class="sub" for="k" style="flex-basis:100%">Admin key</label>
-    <input id="k" type="password" autocomplete="off" placeholder="Paste your admin key">
+    <label class="sub" for="k" style="flex-basis:100%">Stats key</label>
+    <input id="k" type="password" autocomplete="off" placeholder="Stats key">
     <button type="submit">Show stats</button>
   </form>
   <p class="sub err" id="err" hidden></p>
@@ -88,7 +88,7 @@ var K='bd.adminKey',f=document.getElementById('f'),k=document.getElementById('k'
 try{k.value=localStorage.getItem(K)||''}catch(e){}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 async function load(){var e=document.getElementById('err');e.hidden=true;
-  try{var r=await fetch('/api/stats',{headers:{Authorization:'Bearer '+k.value.trim()}});if(r.status===401)throw new Error('That key was not accepted.');if(!r.ok)throw new Error('Could not load stats ('+r.status+').');
+  try{var r=await fetch('/api/stats',{headers:{Authorization:'Bearer '+k.value.trim()}});if(r.status===401)throw new Error('That key was not accepted.');if(r.status===429)throw new Error('Too many wrong keys. Try again in an hour.');if(!r.ok)throw new Error('Could not load stats ('+r.status+').');
     var d=await r.json();try{localStorage.setItem(K,k.value.trim())}catch(x){}
     document.getElementById('c1').textContent=(d.visitors||0).toLocaleString();document.getElementById('c2').textContent=((d.daily[0]||{}).visitors||0).toLocaleString();
     document.getElementById('c3').textContent=(d.installed||0).toLocaleString();document.getElementById('c4').textContent=(d.signedIn||0).toLocaleString();document.getElementById('c5').textContent=(d.pushDevices||0).toLocaleString();

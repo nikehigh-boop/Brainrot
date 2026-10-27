@@ -5,7 +5,7 @@
 // GET -> totals, last 30 days, demographics and the signed-up players list (emails from Clerk).
 //   Needs: Authorization: Bearer <admin token>
 import { redis } from '../lib/redis.js';
-import { isAdmin } from '../lib/admin.js';
+import { isAdmin, isStatsKey } from '../lib/admin.js';
 import { geo } from '../lib/geo.js';
 
 const day = (d = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(d);
@@ -73,7 +73,12 @@ export default async function handler(req, res) {
       return res.status(204).end();
     }
     if (req.method === 'GET') {
-      if (!isAdmin(req.headers.authorization)) return res.status(401).json({ error: 'unauthorized' });
+      // Wrong keys are limited to 10 tries per hour from one connection.
+      const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+      const lk = `statsfail:${ip}`;
+      if (+((await redis.get(lk)) || 0) >= 10) return res.status(429).json({ error: 'Too many wrong keys. Try again in an hour.' });
+      const auth = req.headers.authorization;
+      if (!isAdmin(auth) && !isStatsKey(auth)) { await redis.incr(lk); await redis.expire(lk, 3600); return res.status(401).json({ error: 'unauthorized' }); }
       const days = [];
       for (let i = 0; i < 30; i++) days.push(day(new Date(Date.now() - i * 864e5)));
       const pipe = redis.pipeline();
