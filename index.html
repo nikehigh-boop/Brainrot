@@ -840,6 +840,29 @@ nav.tabs a[data-tab="events"] .n{background:transparent;color:var(--live);font-s
 .tbar b{color:var(--ink);font-size:14px}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 @media (max-width:760px){.trade{grid-template-columns:minmax(0,1fr)}}
+
+/* v7.5 market value */
+.mkt{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:18px;background:var(--deep);border:1px solid var(--line)}
+.mkt-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.mkt-h h3{margin:0}
+.mkt-tag{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.mkt-big{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.mkt-big b{font-family:var(--display);font-weight:900;font-stretch:122%;font-size:38px;line-height:1;color:var(--live)}
+.mkt-big span{font-size:13px;color:var(--mute)}
+.mkt-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.mkt-list li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.mkt-list li:last-child{border-bottom:0}
+.mkt-mut{display:inline-flex;align-items:center;gap:7px;font-weight:600;font-size:14px}
+.mkt-mut i{width:10px;height:10px;border-radius:3px;background:var(--sw)}
+.mkt-list b{font-size:15px;color:var(--ink);text-align:right}
+.mkt-src{grid-column:1/-1;font-size:12px;color:var(--mute)}
+.mkt-src a{color:var(--ter)}
+.mkt-rep summary{cursor:pointer;font-weight:700;font-size:14px;color:var(--zap);padding:6px 0;list-style:none}
+.mkt-rep summary::-webkit-details-marker{display:none}
+.mkt-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end;margin-top:6px}
+.mkt-form select,.mkt-form input{padding:10px 12px;border-radius:12px;border:1px solid var(--line2);background:var(--panel);color:var(--ink);font:inherit;min-height:44px;width:100%;box-sizing:border-box}
+.mkt-form .btn{min-height:44px}
+.mkt-warn{margin:0;font-size:12px;color:#ffc58a;background:rgba(255,138,0,.08);border:1px solid rgba(255,138,0,.3);border-radius:10px;padding:8px 10px}
+.tmkt{margin:-4px 0 0;font-size:13px;font-weight:600;color:var(--live)}
 /* ---------- v7.1 · Launch splash: glitch boot ---------- */
 #splash{position:fixed;inset:0;z-index:2147483000;background:transparent;overflow:hidden;display:grid;place-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent;
   font-family:"Roboto Flex","Google Sans",system-ui,sans-serif;color:#e3e4da;contain:strict;--S:min(84vw,52vh,520px);--R:calc(var(--S) * .43);--W:min(84vw,500px)}
@@ -1120,6 +1143,7 @@ nav.tabs a[data-tab="events"] .n{background:transparent;color:var(--live);font-s
       <div class="trade">
         <div class="panel tside" data-side="0">
           <div class="tside-h"><h3>You give</h3><span class="tsum mono" id="tsum0">$0/s</span></div>
+          <p class="tmkt" id="tmkt0" hidden></p>
           <div class="tlist" id="tl0"></div>
           <div class="tadd">
             <div class="field"><label for="tb0">Add a brainrot</label><select id="tb0"></select></div>
@@ -1129,6 +1153,7 @@ nav.tabs a[data-tab="events"] .n{background:transparent;color:var(--live);font-s
         </div>
         <div class="panel tside" data-side="1">
           <div class="tside-h"><h3>You get</h3><span class="tsum mono" id="tsum1">$0/s</span></div>
+          <p class="tmkt" id="tmkt1" hidden></p>
           <div class="tlist" id="tl1"></div>
           <div class="tadd">
             <div class="field"><label for="tb1">Add a brainrot</label><select id="tb1"></select></div>
@@ -1604,7 +1629,7 @@ function trItem(x,side,i){const b=BY[norm(x.n)],r=R[b.r]||R.common,v=trVal(x);
 function renderTrade(){if(!$('#t-trade'))return;
   const tot=TR.s.map(a=>a.reduce((s,x)=>s+trVal(x),0));
   [0,1].forEach(k=>{$('#tl'+k).innerHTML=TR.s[k].length?TR.s[k].map((x,i)=>trItem(x,k,i)).join(''):`<div class="empty">Nothing here yet. Add the brainrots ${k?'you get':'you give'}.</div>`;
-    $('#tsum'+k).textContent='$'+fmt(tot[k])+'/s';$('#ti'+k).innerHTML=trInvOptions()});
+    $('#tsum'+k).textContent='$'+fmt(tot[k])+'/s';if(typeof mktSide==='function')mktSide(k);$('#ti'+k).innerHTML=trInvOptions()});
   const [g,r]=tot;let html;
   if(!g||!r){html=`<div class="eyebrow">Trade check</div><p class="sub" style="margin:0">Add at least one brainrot to each side. Values use each copy's income with its mutation and traits.</p>`}
   else{const d=(r-g)/g,pct=Math.abs(d*100),cls=Math.abs(d)<=.1?'fair':d>0?'win':'lose';
@@ -1631,6 +1656,48 @@ $('#t-trade').addEventListener('click',e=>{const a=e.target.closest('[data-tadd]
   if(e.target.closest('#tclear')){TR.s=[[],[]];renderTrade();return}});
 $('#t-trade').addEventListener('change',e=>{const m=e.target.closest('[data-tm]');if(m){const [k,i]=m.dataset.tm.split(':').map(Number);if(TR.s[k][i]&&mutBy[m.value]){TR.s[k][i].m=m.value;renderTrade()}}});
 renderTrade();
+
+/* v7.5 · Market value: hand-collected snapshot + community price reports (no outside APIs) */
+const MK={snap:null,sum:{},detail:{}};
+const usd=n=>n==null?'—':'$'+(n>=100?Math.round(n):n.toFixed(2).replace(/\.00$/,''));
+function mkMedian(a){const s=[...a].sort((x,y)=>x-y),m=s.length>>1;return s.length?(s.length%2?s[m]:(s[m-1]+s[m])/2):null}
+function mkSnap(name){return MK.snap?MK.snap.items.filter(i=>i.n===name):[]}
+// One number per brainrot: sold prices count double, listings once; community reports blend in by their own median.
+function mkEstimate(name){const sn=mkSnap(name),sm=MK.sum[name];const pts=[];sn.forEach(i=>{pts.push(i.price);if(i.kind==='sold')pts.push(i.price)});
+  if(sm&&sm.median){for(let i=0;i<Math.min(sm.count,6);i++)pts.push(sm.median)}
+  if(!pts.length)return null;return {v:mkMedian(pts),n:sn.length+(sm?sm.count:0)}}
+async function mkLoad(){try{const [a,b]=await Promise.all([fetch('/market.json').then(r=>r.ok?r.json():null).catch(()=>null),fetch('/api/market').then(r=>r.ok?r.json():null).catch(()=>null)]);
+  if(a)MK.snap=a;if(b&&b.summary)Object.entries(b.summary).forEach(([k,v])=>{MK.sum[k]=typeof v==='string'?JSON.parse(v):v});
+  if(sheetName&&$('#dlg').open)mkRender(sheetName);if(typeof renderTrade==='function')renderTrade()}catch(e){}}
+function mkVid(){try{let v=localStorage.getItem('bd.vid');if(!v){v=(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));localStorage.setItem('bd.vid',v)}return v}catch(e){return 'anon-'+Date.now()}}
+const KLBL={sold:'Sold',bought:'Bought',listed:'Listed'};
+function mkRender(name){const host=$('#dlgc .sheet .body');if(!host)return;let el=$('#mkt');if(!el){el=document.createElement('section');el.id='mkt';el.className='mkt';const foot=host.querySelector('.sfoot');foot?host.insertBefore(el,foot):host.appendChild(el)}
+  const b=BY[norm(name)],est=mkEstimate(name),sn=mkSnap(name),det=MK.detail[name],reps=det?det.reports.slice(0,8):[];
+  const rows=[...sn.map(i=>({m:i.m,price:i.price,kind:i.kind,src:i.src,url:i.url,note:i.note,at:MK.snap.asof})),...reps.map(r=>({m:r.m,price:r.price,kind:r.kind,src:'Player report',at:r.at.slice(0,10)}))];
+  el.innerHTML=`<div class="mkt-h"><h3>Market value</h3><span class="mkt-tag">Unofficial · USD</span></div>
+    ${est?`<div class="mkt-big"><b>${usd(est.v)}</b><span>typical price · ${est.n} price${est.n>1?'s':''} found</span></div>`:`<p class="sub" style="margin:0">No prices found for ${esc(b?b.display:name)} yet. Seen one sell or listed? Add it below.</p>`}
+    ${rows.length?`<ul class="mkt-list">${rows.map(r=>{const m=mutBy[r.m];const sw=m&&/^#/.test(m.c)?m.c:'#8e9282';return `<li><span class="mkt-mut" style="--sw:${sw}"><i></i>${esc(r.m)}</span><b class="mono">${usd(r.price)}</b><span class="mkt-src">${KLBL[r.kind]||''} · ${r.url?`<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.src)} ↗</a>`:esc(r.src)}${r.note?` · ${esc(r.note)}`:''}</span></li>`}).join('')}</ul>`:''}
+    <p class="sub" style="margin:0">${MK.snap?`Snapshot of eBay and Gameflip listings from ${esc(MK.snap.asof)}, plus player reports. `:''}Price depends on mutation, traits and level.</p>
+    <details class="mkt-rep"><summary>Report a price</summary>
+      <form id="mkform" class="mkt-form">
+        <div class="field"><label for="mkm">Mutation</label><select id="mkm">${D.mutations.map(m=>`<option value="${esc(m.name)}">${esc(m.name)}</option>`).join('')}</select></div>
+        <div class="field"><label for="mkp">Price (USD)</label><input id="mkp" type="number" inputmode="decimal" min="0.5" max="2000" step="0.01" placeholder="12.00" required></div>
+        <div class="field"><label for="mkk">What happened</label><select id="mkk"><option value="sold">I sold it</option><option value="bought">I bought it</option><option value="listed">I saw it listed</option></select></div>
+        <button class="btn primary" type="submit">Add price</button>
+      </form>
+    </details>
+    <p class="mkt-warn">Buying or selling Fortnite items for real money breaks Epic's rules and can get accounts banned. Prices are for reference only.</p>`;
+  $('#mkform').addEventListener('submit',async ev=>{ev.preventDefault();const price=parseFloat($('#mkp').value);if(!(price>=0.5&&price<=2000)){toast('Enter a price from $0.50 to $2,000');return}
+    const btn=ev.target.querySelector('button');btn.disabled=true;
+    try{const r=await fetch('/api/market',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({n:name,m:$('#mkm').value,price,kind:$('#mkk').value,v:mkVid()})});const j=await r.json().catch(()=>({}));
+      if(!r.ok){toast(j.error||'Could not save that price');btn.disabled=false;return}
+      MK.sum[name]=j.summary;delete MK.detail[name];toast('Thanks! Price added');mkFetch(name)}catch(e){toast('No connection. Try again later.');btn.disabled=false}})}
+async function mkFetch(name){try{const r=await fetch('/api/market?n='+encodeURIComponent(name));if(r.ok){const j=await r.json();MK.detail[name]=j;if(j.summary)MK.sum[name]=j.summary}}catch(e){}if(sheetName===name&&$('#dlg').open)mkRender(name)}
+const _openSheet=openSheet;openSheet=function(name,keep){_openSheet(name,keep);if(sheetName){mkRender(sheetName);if(!MK.detail[sheetName])mkFetch(sheetName)}};
+function mktSide(k){const el=$('#tmkt'+k);if(!el)return;const a=TR.s[k];if(!a.length){el.hidden=true;return}
+  let tot=0,c=0;a.forEach(x=>{const e=mkEstimate(x.n);if(e){tot+=e.v;c++}});
+  if(!c){el.hidden=true;return}el.hidden=false;el.textContent=`≈ ${usd(tot)} on the market${c<a.length?` (${c} of ${a.length} priced)`:''}`}
+mkLoad();
 
 $('#tsub').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(!b)return;$$('#tsub .chip').forEach(x=>x.setAttribute('aria-pressed',x===b));$$('.tool').forEach(t=>t.hidden=t.id!=='t-'+b.dataset.t)});
 $('#iadd').onclick=()=>openPicker($('#ib').value);
@@ -1947,7 +2014,7 @@ if(navigator.sendBeacon)navigator.sendBeacon('/api/stats',new Blob([body],{type:
 <script>
 /* v6.2 diagnostics shown in the progress (cloud) dialog */
 (function(){function d(){var e=document.getElementById('bkdiag');if(!e)return;var vv=window.visualViewport;var cs=getComputedStyle(document.documentElement);var s=document.getElementById('screen');var r=s?s.getBoundingClientRect():null;
-e.textContent='Build 7.4 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
+e.textContent='Build 7.5 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
 document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('#syncbtn'))setTimeout(d,50)});})();
 </script>
 <script>
