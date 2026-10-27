@@ -1658,8 +1658,8 @@ $('#t-trade').addEventListener('change',e=>{const m=e.target.closest('[data-tm]'
 renderTrade();
 
 /* v7.5 · Market value: hand-collected snapshot + community price reports (no outside APIs) */
-const MK={snap:null,sum:{},detail:{}};
-const usd=n=>n==null?'—':'$'+(n>=100?Math.round(n):n.toFixed(2).replace(/\.00$/,''));
+var MK={snap:null,sum:{},detail:{}};
+var usd=n=>n==null?'—':'$'+(n>=100?Math.round(n):n.toFixed(2).replace(/\.00$/,''));
 function mkMedian(a){const s=[...a].sort((x,y)=>x-y),m=s.length>>1;return s.length?(s.length%2?s[m]:(s[m-1]+s[m])/2):null}
 function mkSnap(name){return MK.snap?MK.snap.items.filter(i=>i.n===name):[]}
 // One number per brainrot: sold prices count double, listings once; community reports blend in by their own median.
@@ -1694,7 +1694,7 @@ function mkRender(name){const host=$('#dlgc .sheet .body');if(!host)return;let e
       MK.sum[name]=j.summary;delete MK.detail[name];toast('Thanks! Price added');mkFetch(name)}catch(e){toast('No connection. Try again later.');btn.disabled=false}})}
 async function mkFetch(name){try{const r=await fetch('/api/market?n='+encodeURIComponent(name));if(r.ok){const j=await r.json();MK.detail[name]=j;if(j.summary)MK.sum[name]=j.summary}}catch(e){}if(sheetName===name&&$('#dlg').open)mkRender(name)}
 const _openSheet=openSheet;openSheet=function(name,keep){_openSheet(name,keep);if(sheetName){mkRender(sheetName);if(!MK.detail[sheetName])mkFetch(sheetName)}};
-function mktSide(k){const el=$('#tmkt'+k);if(!el)return;const a=TR.s[k];if(!a.length){el.hidden=true;return}
+function mktSide(k){if(!MK)return;const el=$('#tmkt'+k);if(!el)return;const a=TR.s[k];if(!a.length){el.hidden=true;return}
   let tot=0,c=0;a.forEach(x=>{const e=mkEstimate(x.n);if(e){tot+=e.v;c++}});
   if(!c){el.hidden=true;return}el.hidden=false;el.textContent=`≈ ${usd(tot)} on the market${c<a.length?` (${c} of ${a.length} priced)`:''}`}
 mkLoad();
@@ -2014,7 +2014,7 @@ if(navigator.sendBeacon)navigator.sendBeacon('/api/stats',new Blob([body],{type:
 <script>
 /* v6.2 diagnostics shown in the progress (cloud) dialog */
 (function(){function d(){var e=document.getElementById('bkdiag');if(!e)return;var vv=window.visualViewport;var cs=getComputedStyle(document.documentElement);var s=document.getElementById('screen');var r=s?s.getBoundingClientRect():null;
-e.textContent='Build 7.5 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
+e.textContent='Build 7.6 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
 document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('#syncbtn'))setTimeout(d,50)});})();
 </script>
 <script>
