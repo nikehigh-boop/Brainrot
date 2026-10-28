@@ -1,7 +1,7 @@
 // Brainrot Dex service worker: push alerts, plus offline caching.
 // - /a/* art and sounds: cache first (file names change when the content does)
 // - the app page and the live feed: network first, cached copy when offline
-const CACHE = 'bd-v2';
+const CACHE = 'bd-v3';
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
@@ -49,10 +49,15 @@ self.addEventListener('fetch', (e) => {
 self.addEventListener('push', (e) => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch { d = { title: 'Brainrot Dex', body: e.data && e.data.text() }; }
-  e.waitUntil(self.registration.showNotification(d.title || 'Brainrot Dex', {
-    body: d.body || '', tag: d.tag || undefined, renotify: !!d.tag,
-    icon: '/icon-192.png', badge: '/favicon.png', data: { url: d.url || '/' },
-  }));
+  e.waitUntil((async () => {
+    await self.registration.showNotification(d.title || 'Brainrot Dex', {
+      body: d.body || '', tag: d.tag || undefined, renotify: !!d.tag,
+      icon: '/icon-192.png', badge: '/favicon.png', data: { url: d.url || '/' },
+    });
+    // An open app plays the brainrot sound picked for this alert type.
+    const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    wins.forEach((c) => c.postMessage({ type: 'bd-alert', topic: d.topic || '', title: d.title || '', body: d.body || '' }));
+  })());
 });
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
