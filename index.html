@@ -980,6 +980,60 @@ nav.tabs a[data-tab="events"] .n{background:transparent;color:var(--live);font-s
   #splash.go .sp-brain>div,#splash.go .sp-word,#splash.go .sp-tag{animation:spFade .3s forwards!important;transform:none}
   #splash.bye .sp-tear i{animation:none!important;transition:opacity .3s;opacity:0}
 }
+
+/* ================= v7.9 · Phones: full-screen app, bottom tab bar, Dex first ================= */
+.bnav,.fbtn,.brandmini{display:none}
+#more{border:0;padding:0;background:transparent;max-width:none;max-height:none;width:100%;margin:auto auto 0}
+#more::backdrop{background:rgba(4,5,3,.6)}
+.morebox{background:var(--panel);border:1px solid var(--line2);border-radius:28px 28px 0 0;padding:14px 16px calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:14px;max-height:85dvh;overflow-y:auto;max-width:640px;margin:0 auto}
+.morehead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.morehead b{font-family:var(--display);font-weight:800;font-size:20px}
+.morehead .x{width:44px;height:44px;border-radius:50%;border:0;background:var(--deep);color:var(--ink);font-size:22px;cursor:pointer}
+.moregrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.moregrid a{display:flex;flex-direction:column;gap:4px;justify-content:center;min-height:68px;padding:12px;border-radius:18px;background:var(--deep);color:var(--ink);text-decoration:none;font-weight:700;font-size:14px}
+.moregrid a span{font:600 11px var(--mono);color:var(--mute)}
+.moregrid a[aria-current=page]{outline:2px solid var(--zap)}
+.morebox .row{display:flex;gap:8px;flex-wrap:wrap}.morebox .row .btn{flex:1 1 140px;min-height:48px}
+.sharebtn svg{flex:none}
+@media (max-width:700px){
+  .frame,.glass,.boot{display:none!important}
+  .screen,#dlg,#pk,#bk{left:0!important;right:0!important;top:var(--st,0px)!important;bottom:auto!important;height:calc(var(--appH,100dvh) - var(--st,0px))!important;border-radius:0!important}
+  .screen main{padding-bottom:calc(96px + env(safe-area-inset-bottom))!important}
+  header.top nav.tabs{display:none}
+  header.top{position:sticky;top:0;z-index:20;background:rgba(6,7,5,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  header.top .bar{padding-block:10px}
+  .brandmini{display:block;width:30px;height:30px;flex:none;margin-right:2px}
+  .bnav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(10,11,8,.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .bnav a,.bnav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:54px;background:none;border:0;color:var(--mute);text-decoration:none;font:600 11.5px/1 var(--display);cursor:pointer;-webkit-tap-highlight-color:transparent;position:relative}
+  .bnav i{display:grid;place-items:center;width:56px;height:30px;border-radius:999px;transition:background .2s}
+  .bnav [aria-current=page]{color:var(--ink)}
+  .bnav [aria-current=page] i{background:var(--sec);color:var(--zap)}
+  .bnav .bdot{position:absolute;top:6px;left:calc(50% + 10px);width:8px;height:8px;border-radius:50%;background:#ff5a3c;box-shadow:0 0 0 2px rgba(10,11,8,.95)}
+  .toast{bottom:calc(86px + env(safe-area-inset-bottom))!important}
+  /* Dex: cards on the first screen */
+  #v-dex .vhead{margin-bottom:10px}
+  #v-dex .vhead .eyebrow,#v-dex .vhead .lede,#asof{display:none}
+  #v-dex .vhead h1{font-size:24px;line-height:1.1;margin:0}
+  #pulse{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -12px 12px;padding:0 12px}
+  #pulse::-webkit-scrollbar{display:none}
+  #pulse>div{flex:none;padding:8px 12px;border-radius:14px}
+  #pulse dt{font-size:10px}
+  #pulse dd{font-size:15px}
+  #pulse .progress dd .meter{width:56px}
+  #v-dex .livestrip{margin-bottom:10px}
+  .fbtn{display:inline-flex}
+  #livestrip{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;white-space:nowrap}
+  #livestrip::-webkit-scrollbar{display:none}
+  #livestrip>*{flex:none}
+  #v-dex .controls.fopen .toggle{flex:1 1 100%;order:3}
+  #v-dex .controls.fopen .chips,#v-dex .controls.fopen .statchips{order:4;flex:1 1 100%}
+  #v-dex .controls{gap:8px;margin-bottom:12px}
+  #v-dex .controls .search{flex:1 1 100%}
+  #v-dex .controls #sort{flex:1 1 0;min-width:0}
+  #v-dex .controls:not(.fopen) .toggle,#v-dex .controls:not(.fopen) .chips,#v-dex .controls:not(.fopen) .statchips{display:none}
+  .fbtn b{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--zap);color:var(--zapInk);font-size:12px}
+  .catch{width:40px;height:40px}
+}
 </style>
 
 <div id="splash" role="img" aria-label="Brainrot Dex is starting">
@@ -995,11 +1049,23 @@ nav.tabs a[data-tab="events"] .n{background:transparent;color:var(--live);font-s
 </div>
 <script>(function(){var s=document.getElementById('splash');if(!s)return;var force=/[?&#]splash\b/.test(location.search+location.hash);try{if(!force&&sessionStorage.getItem('bd.splash')==='1'){s.parentNode.removeChild(s);return}}catch(e){}s.classList.add('go');window.__spT=Date.now()})();</script>
 
+<nav class="bnav" id="bnav" aria-label="Main">
+  <a href="#dex" data-bn="dex"><i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg></i>Dex</a>
+  <a href="#events" data-bn="events"><i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 2M9.5 2.5h5"/></svg></i>Live<span class="bdot" aria-hidden="true"></span></a>
+  <a href="#tools" data-bn="trade"><i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5"/></svg></i>Trade</a>
+  <a href="#collection" data-bn="collection"><i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg></i>Collection</a>
+  <button type="button" data-bn="more" id="bnmore" aria-haspopup="dialog"><i><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/></svg></i>More</button>
+</nav>
+<dialog id="more" aria-labelledby="moreh"><div class="morebox">
+  <div class="morehead"><b id="moreh">Everything in the Dex</b><button class="x" type="button" id="morex" aria-label="Close">×</button></div>
+  <div class="moregrid" id="moregrid"></div>
+  <div class="row"><button class="btn" type="button" id="moreshare">Share my Dex</button><button class="btn" type="button" id="moreinst">Add to Home Screen</button></div>
+</div></dialog>
 <div class="screen" id="screen">
 <header class="top">
   <div class="wrap">
     <div class="bar">
-      <div class="apptitle"><small>Steal the Brainrot · Fortnite</small><b id="apptitle">Dex</b></div>
+      <img class="brandmini" src="/icon-192.png?v=3" alt="" width="30" height="30" style="border-radius:8px"><div class="apptitle"><small>Steal the Brainrot · Fortnite</small><b id="apptitle">Dex</b></div>
       <a class="livepill" href="#events" id="livepill"><i class="dot"></i><span class="t">Halloween V2 ×15</span> live</a>
       <button class="syncbtn" id="albtn" aria-label="Alerts" style="padding-inline:10px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></button>
       <button class="syncbtn" id="syncbtn" aria-label="Backup and sync your progress"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M7 18a5 5 0 1 1 1-9.9A6 6 0 0 1 19 10a4 4 0 0 1-1 8z"/><path d="M12 12v6m-3-3 3 3 3-3"/></svg><span id="syncst">This browser</span></button>
@@ -1021,6 +1087,7 @@ nav.tabs a[data-tab="events"] .n{background:transparent;color:var(--live);font-s
     <div class="controls">
       <label class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input id="q" type="search" placeholder="Search brainrots…" aria-label="Search brainrots" autocomplete="off"></label>
+      <button class="btn fbtn" type="button" id="fbtn" aria-expanded="false" aria-controls="chips">Filters <b id="fbn" hidden>0</b></button>
       <select id="sort" aria-label="Sort">
         <option value="no">Index order</option><option value="inc">Income, high to low</option><option value="cost">Price, high to low</option><option value="pay">Fastest payback</option><option value="az">Name A–Z</option><option value="new">Newest first</option><option value="mkt">Market value, high to low</option>
       </select>
@@ -1036,6 +1103,7 @@ nav.tabs a[data-tab="events"] .n{background:transparent;color:var(--live);font-s
   <section class="view" id="v-collection" hidden>
     <div class="vhead"><div><div class="eyebrow">27 separate indexes</div><h1>Collection</h1>
       <p class="lede">The game keeps a separate index for every mutation. Index 85% of a mutation and your base takes on its colour. Drop under 85% for two weeks and the colour goes away.</p></div></div>
+    <div class="row" style="margin:-6px 0 14px"><button class="btn sharebtn" type="button" id="colshare">Share my Dex</button></div>
     <div class="mgrid" id="mgrid"></div>
     <div class="group-h" id="colhead"><h2 id="colh">Default index</h2><span class="sub" id="colsub"></span></div>
     <div class="controls">
@@ -1310,7 +1378,7 @@ const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v)
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');
 const slug=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-function fmt(n){if(n==null)return'—';const u=[[1e15,'Qa'],[1e12,'T'],[1e9,'B'],[1e6,'M'],[1e3,'K']];for(const[v,s]of u){if(Math.abs(n)>=v){const x=n/v;return(x>=100?x.toFixed(0):x>=10?x.toFixed(1):x.toFixed(2)).replace(/\.?0+$/,'')+s}}return(Math.round(n*100)/100).toString()}
+function fmt(n){if(n==null)return'—';const u=[[1e15,'Qa'],[1e12,'T'],[1e9,'B'],[1e6,'M'],[1e3,'K']];for(const[v,s]of u){if(Math.abs(n)>=v){const x=n/v;return(x>=100?x.toFixed(0):x>=10?x.toFixed(1):x.toFixed(2)).replace(/(\.\d*?)0+$/,'$1').replace(/\.$/,'')+s}}return(Math.round(n*100)/100).toString()}
 function dur(s){if(s==null||!isFinite(s))return'—';if(s<60)return Math.round(s)+'s';const m=s/60;if(m<60)return Math.round(m)+'m';const h=m/60;if(h<48)return(h<10?h.toFixed(1):Math.round(h))+'h';return(h/24<10?(h/24).toFixed(1):Math.round(h/24))+'d'}
 function initials(n){const w=n.replace(/\(.*\)/,'').trim().split(/\s+/);return(w.length>1?w[0][0]+w[1][0]:n.slice(0,2)).toUpperCase()}
 function art(b){return IMG[b.name]?`<img src="${IMG[b.name]}" alt="${esc(b.display)}" loading="lazy" decoding="async">`:`<div class="mono-ph" aria-label="Art not available yet">${esc(initials(b.display))}</div>`}
@@ -1420,13 +1488,20 @@ function card(b){const r=R[b.r]||R.common,own=CAUGHT.has(b.name),n=IDX?S.inv.fil
   <div class="art ${b.art==='snap'?'snap':''}"><span class="no">${num(b)}</span><span class="tier">${r.label}</span>${art(b)}${flag(b)}
   ${canIdx?`<button class="catch" aria-pressed="${own}" aria-label="${own?'Edit indexed copies of ':'Index '}${esc(b.display)}" data-catch="${esc(b.name)}">${own&&n>1?`<b>${n}</b>`:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00391f" stroke-width="4"><path d="M5 12l5 5L20 7"/></svg>'}</button>`:''}</div>
   <div class="meta"><div class="nm">${esc(b.display)}</div><div class="inc">${b.income!=null?'$'+fmt(b.income)+'<span>/s</span>':'<span>stats pending</span>'}</div>${typeof mkTag==='function'?mkTag(b.name):''}</div></div>`}
+/* v7.9 · Dex cards render in chunks as you scroll */
+var RL=[],RN=0,RSIG='',GO=null;var CH=24;
+function gObs(){const m=$('#gmore');if(!m||!('IntersectionObserver' in window)){if(m)gMore(true);return}
+  if(!GO)GO=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting))gMore()},{root:$('#screen'),rootMargin:'1400px 0px'});GO.disconnect();GO.observe(m)}
+function gMore(all){const m=$('#gmore');if(!m)return;const n2=all?RL.length:Math.min(RL.length,RN+CH*2);m.insertAdjacentHTML('beforebegin',RL.slice(RN,n2).map(card).join(''));RN=n2;
+  if(RN>=RL.length){m.remove();if(GO)GO.disconnect()}else if(GO){GO.disconnect();GO.observe(m)}}
 function render(){const q=norm($('#q').value),s=$('#sort').value;
   const base=fSt==='vault'?VB:B;
   let L=base.filter(b=>(!fR.size||fR.has(b.r))&&(!q||norm(b.display).includes(q))&&(!fSt||STF[fSt][1](b))&&(fOwn==='all'||(fOwn==='own'?CAUGHT.has(b.name):!CAUGHT.has(b.name))));
   const nz=(v,d)=>v==null?d:v;
   if(s==='inc')L.sort((a,b)=>nz(b.income,-1)-nz(a.income,-1));if(s==='cost')L.sort((a,b)=>nz(b.cost,-1)-nz(a.cost,-1));
   if(s==='pay')L.sort((a,b)=>nz(a.pay,1e99)-nz(b.pay,1e99));if(s==='az')L.sort((a,b)=>a.display.localeCompare(b.display));if(s==='new')L.sort((a,b)=>b.addedN-a.addedN);if(s==='mkt'){const mv=x=>{const e=typeof mkEstimate==='function'&&mkEstimate(x.name);return e?e.v:-1};L.sort((a,b)=>mv(b)-mv(a))}
-  $('#grid').innerHTML=(fSt==='vault'?`<div class="vaultnote" style="grid-column:1/-1"><b>The Vault.</b> ${VB.length} brainrots removed from the game on July 18. They no longer spawn and don't count toward your indexes. Stats are from STB Hub's March datamine.</div>`:'')+(L.length?L.map(card).join(''):`<div class="empty" style="grid-column:1/-1">No brainrots match. Clear a filter or try another name.</div>`)}
+  $('#grid').innerHTML=(fSt==='vault'?`<div class="vaultnote" style="grid-column:1/-1"><b>The Vault.</b> ${VB.length} brainrots removed from the game on July 18. They no longer spawn and don't count toward your indexes. Stats are from STB Hub's March datamine.</div>`:'')+(L.length?(()=>{const sig=[q,s,[...fR].join(','),fSt,fOwn].join('|');const keep=sig===RSIG?(RN||0):0;RSIG=sig;RL=L;RN=Math.min(L.length,Math.max(CH||24,keep));
+    return L.slice(0,RN).map(card).join('')+(RN<L.length?'<div id="gmore" style="grid-column:1/-1;height:1px"></div>':'')})():`<div class="empty" style="grid-column:1/-1">No brainrots match. Clear a filter or try another name.</div>`);gObs();fCount()}
 $('#grid').addEventListener('click',e=>{const c=e.target.closest('[data-catch]');if(c){e.stopPropagation();openPicker(c.dataset.catch);return}const k=e.target.closest('.card');if(k)openSheet(k.dataset.name)});
 $('#grid').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('card')){e.preventDefault();openSheet(e.target.dataset.name)}});
 
@@ -1458,7 +1533,7 @@ function openSheet(name,keep){const b=BY[norm(name)];if(!b)return;sheetName=b.na
     </div>
     <dl class="kv"><dt>Status</dt><dd>${status}</dd>${b.added?`<dt>Added</dt><dd>${b.added}, 2026</dd>`:''}</dl>
     ${!b.flags.includes('datamined')?`<div><div class="row" style="justify-content:space-between;margin-bottom:6px"><div class="eyebrow">Your copies${myM.length?' · '+myM.length:''}</div>${myM.length?`<span class="sub">${new Set(myM).size} of ${D.mutations.length} mutations</span>`:''}</div>${copiesHTML(b.name,true)||'<p class="sub" style="margin:0">Not indexed yet.</p>'}</div>`:''}
-    <div class="row">${!b.flags.includes('datamined')?`<button class="btn primary" id="sheetcatch">${own?'Index another copy':'Index it'}</button>`:''}${b.income!=null&&!b.vault?`<a class="btn" href="#calc" id="tocalc">Calculator</a>`:''}<button class="btn" id="sheetlink" aria-label="Copy a link to ${esc(b.display)}">Copy link</button></div>
+    <div class="row">${!b.flags.includes('datamined')?`<button class="btn primary" id="sheetcatch">${own?'Index another copy':'Index it'}</button>`:''}${b.income!=null&&!b.vault?`<a class="btn" href="#calc" id="tocalc">Calculator</a>`:''}<button class="btn" id="sheetlink" aria-label="Copy a link to ${esc(b.display)}">Copy link</button><button class="btn sharebtn" id="sheetshare" type="button">Share</button></div>
     ${b.src.length?`<div><div class="eyebrow" style="margin-bottom:6px">Where it comes from</div><div class="srcs">${b.src.map(s=>`<span>${esc(s)}</span>`).join('')}</div></div>`:''}
     ${b.income!=null?`<div><div class="eyebrow" style="margin-bottom:6px">Income by mutation</div><div class="ladder">${mults.map(m=>`<div class="lrow ${myM.includes(m.name)?'have':''}" style="--sw:${m.c}"><i></i><span>${esc(m.name)} <span class="sub">×${m.m}</span>${myM.includes(m.name)?' <span class="okb">indexed</span>':''}</span><span class="mono">$${fmt(b.income*m.m)}/s</span></div>`).join('')}</div></div>`:''}
     <p class="credit">${b.art?'Art: '+ARTNOTE[b.art]:'No art has surfaced for this one yet.'}${D.snd[b.name]?' Sound from STB Hub.':''}</p>
@@ -1647,7 +1722,7 @@ function renderTrade(){if(!$('#t-trade'))return;
     html=`<div class="tverdict ${cls}"><div class="eyebrow">Trade check</div><div class="tword">${word}</div><p class="sub" style="margin:0">${line}</p></div>
     <div class="tbars"><div class="tbar"><span>You give</span><i style="width:${g/mx*100}%"></i><b class="mono">$${fmt(g)}/s</b></div><div class="tbar get"><span>You get</span><i style="width:${r/mx*100}%"></i><b class="mono">$${fmt(r)}/s</b></div></div>
     <div class="stats"><div class="stat"><span>Difference</span><b>${r>=g?'+':'−'}$${fmt(Math.abs(r-g))}/s</b></div><div class="stat"><span>Per hour</span><b>${r>=g?'+':'−'}$${fmt(Math.abs(r-g)*3600)}</b></div><div class="stat"><span>Ratio</span><b>${(r/g).toFixed(2)}×</b></div></div>
-    <div class="row"><button class="btn" type="button" id="tcopy">Copy trade summary</button><button class="btn" type="button" id="tswap">Swap sides</button><button class="btn" type="button" id="tclear">Clear</button></div>`}
+    <div class="row"><button class="btn primary sharebtn" type="button" id="tshare">Share image</button><button class="btn" type="button" id="tcopy">Copy trade summary</button><button class="btn" type="button" id="tswap">Swap sides</button><button class="btn" type="button" id="tclear">Clear</button></div>`}
   html+=`<p class="sub" style="margin:0">Value is income per second (base × mutation + traits, from the STB Hub datamine). Limited, event-only and rare-mutation brainrots often trade above their income, so treat this as the baseline. Use Chill Hour or a middleman for big trades.</p>`;
   $('#tout').innerHTML=html;trSave()}
 function trSummary(){const t=TR.s.map(a=>a.map(x=>`${x.m!=='Default'?x.m+' ':''}${(BY[norm(x.n)]||{}).display||x.n}${x.t.length?' ('+x.t.join(', ')+')':''} $${fmt(trVal(x))}/s`).join('\n  '));
@@ -1665,6 +1740,101 @@ $('#t-trade').addEventListener('click',e=>{const a=e.target.closest('[data-tadd]
 $('#t-trade').addEventListener('change',e=>{const m=e.target.closest('[data-tm]');if(m){const [k,i]=m.dataset.tm.split(':').map(Number);if(TR.s[k][i]&&mutBy[m.value]){TR.s[k][i].m=m.value;renderTrade()}}});
 renderTrade();
 
+
+/* v7.9 · Bottom tab bar, More sheet, Filters button */
+const MORE=TABS.filter(t=>!['dex','events','collection'].includes(t[0]));
+function moreGrid(h){$('#moregrid').innerHTML=MORE.map(([id,l,n])=>`<a href="#${id}" data-more="${id}"${id===h?' aria-current="page"':''}>${esc(l)}${n!==''&&n!=='●'?`<span>${n}</span>`:''}</a>`).join('')}
+function bnSync(){let h=(location.hash||'#dex').slice(1);if(h.startsWith('b-'))h='dex';if(!TABS.some(t=>t[0]===h))h='dex';
+  const on=h==='tools'?'trade':['dex','events','collection'].includes(h)?h:'more';
+  $$('#bnav [data-bn]').forEach(a=>{if(a.dataset.bn===on)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')})}
+const _show=show;show=function(){const r=_show();bnSync();return r};bnSync();
+function toTrade(){const go=()=>{const b=$('#tsub [data-t=trade]');if(b)b.click()};if((location.hash||'')==='#tools'){go();$('#screen').scrollTo({top:0})}else{location.hash='#tools';setTimeout(go,30)}}
+$('#bnav').addEventListener('click',e=>{const a=e.target.closest('[data-bn]');if(!a)return;
+  if(a.dataset.bn==='trade'){e.preventDefault();toTrade();return}
+  if(a.dataset.bn==='more'){moreGrid((location.hash||'#dex').slice(1));$('#more').showModal();return}
+  if(a.getAttribute('href')===location.hash||(!location.hash&&a.dataset.bn==='dex')){e.preventDefault();$('#screen').scrollTo({top:0,behavior:'smooth'})}});
+$('#more').addEventListener('click',e=>{if(e.target===$('#more')||e.target.closest('#morex')||e.target.closest('[data-more]'))$('#more').close()});
+$('#moreinst').addEventListener('click',()=>{$('#more').close();if(window.bdInstall)window.bdInstall()});
+$('#moreshare').addEventListener('click',()=>{$('#more').close();shareCollection()});
+$('#fbtn').addEventListener('click',()=>{const c=$('#v-dex .controls'),o=!c.classList.contains('fopen');c.classList.toggle('fopen',o);$('#fbtn').setAttribute('aria-expanded',o)});
+function fCount(){const n=fR.size+(fSt?1:0)+(fOwn!=='all'?1:0);const b=$('#fbn');if(b){b.hidden=!n;b.textContent=n}}
+fCount();
+
+/* v7.9 · Share cards: a brainrot, a trade verdict, or your collection, as an image */
+const SC_BRAIN=new Path2D('M50 22 C44 14 30 14 27 23 C18 22 12 30 15 38 C8 42 8 54 15 58 C12 66 18 75 27 74 C30 83 44 84 50 77 C56 84 70 83 73 74 C82 75 88 66 85 58 C92 54 92 42 85 38 C88 30 82 22 73 23 C70 14 56 14 50 22 Z');
+const SC_VEIN=new Path2D('M50 24 V76 M27 23 C33 27 34 32 30 36 M15 38 C21 40 24 44 23 48 M15 58 C21 57 25 60 26 64 M38 30 C35 36 39 40 36 45 M73 23 C67 27 66 32 70 36 M85 38 C79 40 76 44 77 48 M85 58 C79 57 75 60 74 64 M62 30 C65 36 61 40 64 45');
+const SCF='"Roboto Flex","Google Sans",system-ui,sans-serif',SCM='"Roboto Mono",ui-monospace,monospace';
+function scImg(src){return new Promise(r=>{if(!src)return r(null);const i=new Image();i.decoding='async';i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src})}
+const scHex=c=>typeof c==='string'&&/^#[0-9a-f]{6}$/i.test(c)?c:'#c5f33c';
+function scWide(x,on){try{x.fontStretch=on?'expanded':'normal'}catch(e){}}
+function scFit(x,text,max,size,weight){let z=size;do{x.font=`${weight} ${z}px ${SCF}`;z-=4}while(x.measureText(text).width>max&&z>28);return z+4}
+function scRR(x,X,Y,w,h,r){x.beginPath();x.roundRect?x.roundRect(X,Y,w,h,r):x.rect(X,Y,w,h)}
+function scBase(W,H){const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  x.fillStyle='#060705';x.fillRect(0,0,W,H);
+  [[W*.1,0,W*.9,'rgba(197,243,60,.22)'],[W,H,W,'rgba(182,92,255,.28)'],[W*.95,H*.2,W*.55,'rgba(61,240,255,.10)']].forEach(([cx,cy,r,col])=>{const g=x.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,col);g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,W,H)});
+  x.strokeStyle='rgba(227,228,218,.045)';x.lineWidth=1;for(let i=0;i<W;i+=54){x.beginPath();x.moveTo(i,0);x.lineTo(i,H);x.stroke()}for(let j=0;j<H;j+=54){x.beginPath();x.moveTo(0,j);x.lineTo(W,j);x.stroke()}
+  return [c,x]}
+function scBrand(x,X,Y,s){const k=s/100;[['#ff3df0',-4],['#3df0ff',4]].forEach(([c,d])=>{x.save();x.translate(X+d*k,Y);x.scale(k,k);x.globalAlpha=.85;x.fillStyle=c;x.fill(SC_BRAIN);x.restore()});
+  x.save();x.translate(X,Y);x.scale(k,k);x.fillStyle='#c5f33c';x.fill(SC_BRAIN);x.strokeStyle='#050604';x.lineWidth=3.5;x.lineCap='round';x.stroke(SC_VEIN);x.fillStyle='#050604';x.fillRect(0,44,100,4);x.restore();
+  scWide(x,1);x.font=`900 ${s*.5}px ${SCF}`;x.textBaseline='middle';x.fillStyle='#e3e4da';x.fillText('BRAINROT',X+s*1.15,Y+s*.5);const w=x.measureText('BRAINROT ').width;x.fillStyle='#c5f33c';x.fillText('DEX',X+s*1.15+w,Y+s*.5);scWide(x,0);x.textBaseline='alphabetic'}
+function scGlitch(x,text,X,Y,size,col,align){scWide(x,1);x.font=`900 ${size}px ${SCF}`;x.textAlign=align||'left';
+  x.fillStyle='rgba(255,61,240,.85)';x.fillText(text,X-5,Y);x.fillStyle='rgba(61,240,255,.75)';x.fillText(text,X+5,Y);x.fillStyle=col||'#e3e4da';x.fillText(text,X,Y);scWide(x,0);x.textAlign='left'}
+function scFoot(x,W,H,line){x.fillStyle='#c5f33c';const t='brainrotdex.vercel.app';x.font=`800 34px ${SCF}`;const w=x.measureText(t).width+64;scRR(x,(W-w)/2,H-150,w,72,36);x.fill();
+  x.fillStyle='#142000';x.textAlign='center';x.textBaseline='middle';x.fillText(t,W/2,H-114);x.textBaseline='alphabetic';
+  x.fillStyle='#8e9282';x.font=`500 22px ${SCF}`;x.fillText(line||'Fan-made. Not affiliated with Epic Games or Ferins.',W/2,H-40);x.textAlign='left'}
+function scStat(x,X,Y,w,label,val,col){x.fillStyle='rgba(22,24,15,.9)';scRR(x,X,Y,w,124,26);x.fill();x.strokeStyle='rgba(227,228,218,.12)';x.lineWidth=2;x.stroke();
+  x.fillStyle='#a7ab9a';x.font=`700 20px ${SCM}`;x.fillText(label.toUpperCase(),X+24,Y+42);x.fillStyle=col||'#e3e4da';x.font=`700 ${scFit(x,val,w-48,46,700)}px ${SCM}`;x.font=x.font.replace(SCF,SCM);x.fillText(val,X+24,Y+98)}
+async function scFonts(){try{await Promise.all(['900 80px "Roboto Flex"','700 40px "Roboto Mono"','500 24px "Roboto Flex"'].map(f=>document.fonts.load(f)))}catch(e){}}
+async function scSend(canvas,file,text){const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));if(!blob){toast('Could not make the image');return}
+  const f=new File([blob],file,{type:'image/png'});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],text});return}catch(e){if(e&&e.name==='AbortError')return}}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=file;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('Image saved. Post it anywhere!')}
+async function shareBrainrot(name){const b=BY[norm(name)];if(!b)return;toast('Making your image…');await scFonts();
+  const W=1080,H=1350,[c,x]=scBase(W,H),r=R[b.r]||R.common,rc=scHex(r.c);
+  scBrand(x,60,58,64);
+  x.fillStyle=rc;x.font=`800 26px ${SCM}`;const rl=(r.label||b.r).toUpperCase();const rw=x.measureText(rl).width+44;scRR(x,W-60-rw,64,rw,54,27);x.globalAlpha=.18;x.fill();x.globalAlpha=1;x.strokeStyle=rc;x.lineWidth=2;x.stroke();x.textAlign='center';x.fillText(rl,W-60-rw/2,100);x.textAlign='left';
+  const g=x.createRadialGradient(W/2,560,40,W/2,560,420);g.addColorStop(0,rc+'55');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,160,W,800);
+  const im=await scImg(IMG[b.name]);
+  if(im){const s=600,k=Math.max(1,Math.floor(Math.min(s/im.width,s/im.height)));x.imageSmoothingEnabled=false;x.drawImage(im,(W-im.width*k)/2,250+(s-im.height*k)/2,im.width*k,im.height*k);x.imageSmoothingEnabled=true}
+  else{x.fillStyle=rc;x.globalAlpha=.25;scRR(x,W/2-200,350,400,400,60);x.fill();x.globalAlpha=1;scGlitch(x,initials(b.display),W/2,620,160,rc,'center')}
+  x.fillStyle='#a7ab9a';x.font=`700 26px ${SCM}`;x.fillText(num(b).replace(/<[^>]+>/g,''),60,920);
+  const ns=scFit(x,b.display.toUpperCase(),W-120,104,900);scGlitch(x,b.display.toUpperCase(),60,920+ns*.95,ns);
+  const est=typeof mkEstimate==='function'?mkEstimate(b.name):null;const st=[['Income',b.income!=null?'$'+fmt(b.income)+'/s':'—','#c5f33c'],['Price',b.cost!=null?'$'+fmt(b.cost):'—'],['Market',est?'≈ '+usd(est.v):'—','#ff3df0']];
+  const sy=Math.min(1100,940+ns+30),sw=(W-120-32)/3;st.forEach((v,i)=>scStat(x,60+i*(sw+16),sy,sw,v[0],v[1],v[2]));
+  scFoot(x,W,H,CAUGHT.has(b.name)?'✓ In my Dex · Fan-made. Not affiliated with Epic Games or Ferins.':'');
+  await scSend(c,`brainrot-dex-${(SLUGOF?SLUGOF(b):norm(b.display).replace(/ /g,'-'))}.png`,`${b.display} on Brainrot Dex: brainrotdex.vercel.app/#b-${SLUGOF?SLUGOF(b):''}`)}
+const SLUGOF=b=>{for(const k in SLUG)if(SLUG[k]===b.name)return k;return norm(b.display).replace(/ /g,'-')};
+async function shareTrade(){const g=TR.s[0].reduce((a,y)=>a+trVal(y),0),rv=TR.s[1].reduce((a,y)=>a+trVal(y),0);if(!g||!rv){toast('Add a brainrot to each side first');return}
+  toast('Making your image…');await scFonts();const W=1080,H=1350,[c,x]=scBase(W,H);scBrand(x,60,58,64);
+  const d=(rv-g)/g,cls=Math.abs(d)<=.1?'fair':d>0?'win':'lose',word={fair:'FAIR TRADE',win:'I WIN THIS TRADE',lose:'I OVERPAID'}[cls],col={fair:'#3df0ff',win:'#c5f33c',lose:'#ff3df0'}[cls];
+  x.fillStyle='#a7ab9a';x.font=`700 28px ${SCM}`;x.fillText('TRADE CHECK',60,232);const vs=scFit(x,word,W-120,120,900);scGlitch(x,word,60,232+vs,vs,col);
+  const top=290+vs,colW=(W-120-24)/2;
+  for(const k of [0,1]){const X=60+k*(colW+24);x.fillStyle='rgba(22,24,15,.92)';scRR(x,X,top,colW,640,30);x.fill();x.strokeStyle=k?col:'rgba(227,228,218,.14)';x.lineWidth=k?3:2;x.stroke();
+    x.fillStyle='#a7ab9a';x.font=`700 24px ${SCM}`;x.fillText(k?'I GET':'I GIVE',X+28,top+52);x.fillStyle=k?col:'#e3e4da';x.font=`700 40px ${SCM}`;x.fillText('$'+fmt(k?rv:g)+'/s',X+28,top+104);
+    const items=TR.s[k].slice(0,5);let y=top+140;
+    for(const it of items){const b=BY[norm(it.n)];const im=b?await scImg(IMG[b.name]):null;if(im){const k2=Math.min(76/im.width,76/im.height);x.drawImage(im,X+28,y,im.width*k2,im.height*k2)}
+      x.fillStyle='#e3e4da';const nm=(b?b.display:it.n);x.font=`700 ${scFit(x,nm,colW-150,28,700)}px ${SCF}`;x.fillText(nm,X+120,y+34);x.fillStyle='#a7ab9a';x.font=`500 22px ${SCF}`;x.fillText((it.m!=='Default'?it.m+' · ':'')+'$'+fmt(trVal(it))+'/s',X+120,y+66);y+=94}
+    if(TR.s[k].length>5){x.fillStyle='#a7ab9a';x.font=`600 22px ${SCF}`;x.fillText('+'+(TR.s[k].length-5)+' more',X+28,y+24)}}
+  x.fillStyle='#e3e4da';x.font=`600 30px ${SCF}`;x.textAlign='center';x.fillText(`${rv>=g?'+':'−'}$${fmt(Math.abs(rv-g))}/s · ${(rv/g).toFixed(2)}× income`,W/2,top+700);x.textAlign='left';
+  scFoot(x,W,H,'Check your trade free · Fan-made. Not affiliated with Epic Games or Ferins.');
+  await scSend(c,'brainrot-dex-trade.png','Trade check on Brainrot Dex: brainrotdex.vercel.app')}
+async function shareCollection(){const pool=B.filter(isPool),own=pool.filter(b=>CAUGHT.has(b.name)),tot=pool.length;if(!own.length){toast('Index a brainrot first, then share your Dex');return}
+  toast('Making your image…');await scFonts();const W=1080,H=1350,[c,x]=scBase(W,H);scBrand(x,60,58,64);
+  x.fillStyle='#a7ab9a';x.font=`700 28px ${SCM}`;x.fillText('MY STEAL THE BRAINROT DEX',60,232);
+  scGlitch(x,`${own.length}/${tot}`,60,380,170,'#c5f33c');const pct=Math.round(own.length/tot*100);
+  x.fillStyle='#e3e4da';x.font=`700 40px ${SCF}`;x.fillText(`${pct}% indexed`,60,446);
+  x.fillStyle='rgba(227,228,218,.12)';scRR(x,60,476,W-120,22,11);x.fill();x.fillStyle='#c5f33c';scRR(x,60,476,Math.max(22,(W-120)*own.length/tot),22,11);x.fill();
+  const muts=Object.keys(IDX).filter(m=>m!=='Default'&&IDX[m].size).sort((a,b2)=>IDX[b2].size-IDX[a].size).slice(0,3);
+  x.fillStyle='#a7ab9a';x.font=`600 26px ${SCF}`;x.fillText(`${S.inv.length} cop${S.inv.length===1?'y':'ies'} · ${Object.keys(IDX).length} mutation index${Object.keys(IDX).length===1?'':'es'} started`+(muts.length?` · most: ${muts.join(', ')}`:''),60,548);
+  const best=own.slice().sort((a,b2)=>(b2.income||0)-(a.income||0)).slice(0,8);const cw=(W-120-3*16)/4;let i=0;
+  for(const b of best){const X=60+(i%4)*(cw+16),Y=600+Math.floor(i/4)*(cw+70);const rc=scHex((R[b.r]||R.common).c);x.fillStyle='rgba(22,24,15,.92)';scRR(x,X,Y,cw,cw+54,24);x.fill();x.strokeStyle=rc;x.globalAlpha=.6;x.lineWidth=2;x.stroke();x.globalAlpha=1;
+    const im=await scImg(IMG[b.name]);if(im){const k=Math.min((cw-30)/im.width,(cw-30)/im.height);x.imageSmoothingEnabled=k<1.5;x.drawImage(im,X+(cw-im.width*k)/2,Y+12+(cw-30-im.height*k)/2,im.width*k,im.height*k)}
+    x.fillStyle='#e3e4da';x.font=`700 ${scFit(x,b.display,cw-24,22,700)}px ${SCF}`;x.textAlign='center';x.fillText(b.display,X+cw/2,Y+cw+12);x.fillStyle='#c5f33c';x.font=`700 18px ${SCM}`;x.fillText(b.income!=null?'$'+fmt(b.income)+'/s':'',X+cw/2,Y+cw+40);x.textAlign='left';i++}
+  scFoot(x,W,H,'Track yours free · Fan-made. Not affiliated with Epic Games or Ferins.');
+  await scSend(c,'my-brainrot-dex.png',`My Brainrot Dex: ${own.length}/${tot} indexed. Track yours: brainrotdex.vercel.app`)}
+document.addEventListener('click',e=>{if(e.target.closest('#sheetshare')){e.preventDefault();if(sheetName)shareBrainrot(sheetName)}
+  else if(e.target.closest('#tshare')){e.preventDefault();shareTrade()}
+  else if(e.target.closest('#colshare')){e.preventDefault();shareCollection()}});
 /* v7.7 · Market value: daily Gameflip Steal the Brainrot prices + eBay snapshot + player reports */
 var MK={snap:null,sum:{},detail:{},gf:null,gfBy:{},est:{}};
 var usd=n=>n==null?'—':'$'+(n>=100?Math.round(n):n.toFixed(2).replace(/\.00$/,''));
@@ -1690,7 +1860,7 @@ async function mkLoad(){try{const j=u=>fetch(u).then(r=>r.ok?r.json():null).catc
 function mkVid(){try{let v=localStorage.getItem('bd.vid');if(!v){v=(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));localStorage.setItem('bd.vid',v)}return v}catch(e){return 'anon-'+Date.now()}}
 const KLBL={sold:'Sold',bought:'Bought',listed:'Listed'};
 function mkRender(name){const host=$('#dlgc .sheet .body');if(!host)return;let el=$('#mkt');if(!el){el=document.createElement('section');el.id='mkt';el.className='mkt';const foot=host.querySelector('.sfoot');foot?host.insertBefore(el,foot):host.appendChild(el)}
-  const b=BY[norm(name)],est=mkEstimate(name),det=MK.detail[name],reps=det?det.reports.slice(0,20):[];
+  const b=BY[norm(name)],est=mkEstimate(name),det=MK.detail[name],reps=det&&Array.isArray(det.reports)?det.reports.slice(0,20):[];
   const all=[...mkRows(name),...reps.map(r=>({m:r.m,price:r.price,kind:r.kind,src:'Player report',at:r.at.slice(0,10)}))];
   const grp={};all.forEach(r=>(grp[r.m]=grp[r.m]||[]).push(r.price));
   const muts=Object.entries(grp).map(([m,p])=>({m,v:mkMedian(p),n:p.length})).sort((x,y)=>y.v-x.v);
@@ -2043,7 +2213,7 @@ if(navigator.sendBeacon)navigator.sendBeacon('/api/stats',new Blob([body],{type:
 <script>
 /* v6.2 diagnostics shown in the progress (cloud) dialog */
 (function(){function d(){var e=document.getElementById('bkdiag');if(!e)return;var vv=window.visualViewport;var cs=getComputedStyle(document.documentElement);var s=document.getElementById('screen');var r=s?s.getBoundingClientRect():null;
-e.textContent='Build 7.8 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
+e.textContent='Build 7.9 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
 document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('#syncbtn'))setTimeout(d,50)});})();
 </script>
 <script>
