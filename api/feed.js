@@ -32,6 +32,13 @@ export default async function handler(req, res) {
       const prev = (await redis.get(KEY)) || (await bundled(req));
       const doc = { ...prev, ...body };
       await redis.set(KEY, doc);
+      // Keep every Admin Machine roll and wave time ever posted, to look for a repeating schedule.
+      try {
+        const hist = {};
+        for (const r of doc?.live?.admin?.rolls || []) if (r && r.at) hist['r|' + r.at] = JSON.stringify({ event: r.event, boost: r.boost, traits: r.traits, spawn: r.spawn });
+        for (const e of doc?.events || []) for (const w of e?.waves || []) if (w && w.name && w.next) hist['w|' + w.name + '|' + w.next] = '1';
+        if (Object.keys(hist).length) await redis.hset('hist:schedule', hist);
+      } catch {}
       const proto = req.headers['x-forwarded-proto'] || 'https';
       const origin = `${proto}://${req.headers.host}`;
       let alerts = [], schedule = null;
