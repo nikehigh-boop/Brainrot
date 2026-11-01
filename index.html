@@ -2232,7 +2232,7 @@ function cleanEv(e){const t=x=>x&&!isNaN(Date.parse(x))?String(x):'';const daily
   return {title:String(e.title||''),kind:String(e.kind||'upcoming'),body:String(e.body||''),tag:String(e.tag||'').slice(0,20),when:String(e.when||'').slice(0,120),start:t(e.start),end:t(e.end),next:t(e.next),nextEnd:t(e.nextEnd),daily,tz:tzOK(e.tz),dur:+e.dur>0?+e.dur:60,waves,wave:String(e.wave||'').slice(0,30)}}
 D.events=(D.events||[]).map(cleanEv);
 /* v8.4 · fixed schedules can be anchored to a time zone (the game runs on US Eastern time) */
-const tzOK=z=>typeof z==='string'&&/^[A-Za-z_]+\/[A-Za-z_]+$/.test(z)?z:'';
+function tzOK(z){return typeof z==='string'&&/^[A-Za-z_]+\/[A-Za-z_]+$/.test(z)?z:''}
 function tzOff(tz,t){const p={};new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric',second:'numeric'}).formatToParts(new Date(t)).forEach(x=>p[x.type]=x.value);return Date.UTC(+p.year,+p.month-1,+p.day,+p.hour%24,+p.minute,+p.second)-t}
 function tzYMD(tz,t){const p={};new Intl.DateTimeFormat('en-US',{timeZone:tz,year:'numeric',month:'numeric',day:'numeric'}).formatToParts(new Date(t)).forEach(x=>p[x.type]=x.value);return [+p.year,+p.month-1,+p.day]}
 function zonedUTC(tz,y,mo,d,h,mi){const w=Date.UTC(y,mo,d,h,mi);let t=w;for(let i=0;i<2;i++)t=w-tzOff(tz,t);return t}
@@ -2458,7 +2458,7 @@ trEl(document.body);watch();sel();
 <script>
 /* v6.2 diagnostics shown in the progress (cloud) dialog */
 (function(){function d(){var e=document.getElementById('bkdiag');if(!e)return;var vv=window.visualViewport;var cs=getComputedStyle(document.documentElement);var s=document.getElementById('screen');var r=s?s.getBoundingClientRect():null;
-e.textContent='Build 8.4 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
+e.textContent='Build 8.4.1 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
 document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('#syncbtn'))setTimeout(d,50)});})();
 </script>
 <script>
