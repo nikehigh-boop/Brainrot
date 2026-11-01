@@ -31,6 +31,7 @@ export default async function handler(req, res) {
       if (!body || typeof body !== 'object' || Array.isArray(body)) return res.status(400).json({ error: 'send a JSON object' });
       const prev = (await redis.get(KEY)) || (await bundled(req));
       const doc = { ...prev, ...body };
+      if (body.live || body.events) doc.liveAt = new Date().toISOString(); // when live times were last refreshed
       await redis.set(KEY, doc);
       // Keep every Admin Machine roll and wave time ever posted, to look for a repeating schedule.
       try {
