@@ -2213,12 +2213,12 @@ function applyFeed(f){if(!f||typeof f!=='object')return;
 /* Live now: always-on events + Admin Machine roll clock */
 function cleanLive(l){const o={updated:String(l.updated||''),always:[],admin:{hours:[4,10,16,22],minute:30,rolls:[]}};
   if(Array.isArray(l.always))o.always=l.always.filter(x=>x&&x.title).slice(0,12).map(x=>({title:String(x.title).slice(0,60),tag:String(x.tag||'').slice(0,24),body:String(x.body||'').slice(0,240)}));
-  const a=l.admin||{};if(Array.isArray(a.hours)&&a.hours.every(h=>Number.isInteger(h)&&h>=0&&h<24))o.admin.hours=a.hours.slice(0,24);if(Number.isInteger(a.minute)&&a.minute>=0&&a.minute<60)o.admin.minute=a.minute;
+  const a=l.admin||{};if(Array.isArray(a.hours)&&a.hours.every(h=>Number.isInteger(h)&&h>=0&&h<24))o.admin.hours=a.hours.slice(0,24);if(Number.isInteger(a.minute)&&a.minute>=0&&a.minute<60)o.admin.minute=a.minute;if(tzOK(a.tz))o.admin.tz=a.tz;
   if(Array.isArray(a.rolls))o.admin.rolls=a.rolls.filter(r=>r&&r.at&&!isNaN(Date.parse(r.at))).slice(-40).map(r=>({at:String(r.at),event:String(r.event||'').slice(0,30),boost:String(r.boost||'').slice(0,40),traits:Array.isArray(r.traits)?r.traits.map(String).slice(0,12):[],spawn:typeof r.spawn==='number'?r.spawn:null}));
   return o}
 let LV=cleanLive(D.live||{});
 const rollT=()=>LV.admin.rolls.map(r=>({...r,t:Date.parse(r.at)}));
-function slots(now,back,fwd){const d=new Date(now),L=[];for(let day=-2;day<=3;day++)for(const h of LV.admin.hours)L.push(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()+day,h,LV.admin.minute));L.sort((a,b)=>a-b);const past=L.filter(x=>x<=now),fut=L.filter(x=>x>now);return {last:past.slice(-back),next:fut.slice(0,fwd)}}
+function slots(now,back,fwd){const d=new Date(now),L=[];const z=LV.admin.tz&&tzYMD(LV.admin.tz,now);for(let day=-2;day<=3;day++)for(const h of LV.admin.hours)L.push(z?zonedUTC(LV.admin.tz,z[0],z[1],z[2]+day,h,LV.admin.minute):Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()+day,h,LV.admin.minute));L.sort((a,b)=>a-b);const past=L.filter(x=>x<=now),fut=L.filter(x=>x>now);return {last:past.slice(-back),next:fut.slice(0,fwd)}}
 const rollAt=t=>rollT().find(r=>Math.abs(r.t-t)<9e5);
 const hms=s=>{s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;if(h>=24)return Math.floor(h/24)+'d '+(h%24)+'h '+String(m).padStart(2,'0')+'m';return(h?h+'h ':'')+String(m).padStart(h?2:1,'0')+'m '+String(x).padStart(2,'0')+'s'};
 const tLoc=t=>new Date(t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
@@ -2229,9 +2229,14 @@ function rollBlock(r){if(!r)return '<p class="sub" style="margin:0">STB Hub hasn
 
 /* v6.6 · every event gets a status and its own timer */
 function cleanEv(e){const t=x=>x&&!isNaN(Date.parse(x))?String(x):'';const daily=Array.isArray(e.daily)?e.daily.map(String).filter(x=>/^\d{1,2}:\d{2}$/.test(x)).slice(0,24):[];const waves=Array.isArray(e.waves)?e.waves.filter(w=>w&&w.name).slice(0,20).map(w=>({name:String(w.name).slice(0,30),icon:String(w.icon||'').slice(0,4),mut:String(w.mut||w.name).slice(0,30),next:t(w.next),slots:Array.isArray(w.slots)?w.slots.map(String).filter(x=>/^\d{1,2}:\d{2}$/.test(x)).slice(0,24):[]})):[];
-  return {title:String(e.title||''),kind:String(e.kind||'upcoming'),body:String(e.body||''),tag:String(e.tag||'').slice(0,20),when:String(e.when||'').slice(0,120),start:t(e.start),end:t(e.end),next:t(e.next),nextEnd:t(e.nextEnd),daily,dur:+e.dur>0?+e.dur:60,waves,wave:String(e.wave||'').slice(0,30)}}
+  return {title:String(e.title||''),kind:String(e.kind||'upcoming'),body:String(e.body||''),tag:String(e.tag||'').slice(0,20),when:String(e.when||'').slice(0,120),start:t(e.start),end:t(e.end),next:t(e.next),nextEnd:t(e.nextEnd),daily,tz:tzOK(e.tz),dur:+e.dur>0?+e.dur:60,waves,wave:String(e.wave||'').slice(0,30)}}
 D.events=(D.events||[]).map(cleanEv);
-function dailyWin(e,now){const d=new Date(now),L=[];for(let k=-1;k<=1;k++)for(const hm of e.daily){const [h,m]=hm.split(':').map(Number);L.push(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()+k,h,m))}L.sort((a,b)=>a-b);const D=e.dur*6e4;const cur=L.find(s=>s<=now&&now<s+D);if(cur!=null)return {st:'live',until:cur+D,lbl:'Ends in',then:L.find(s=>s>now)};const nx=L.find(s=>s>now);return {st:'soon',until:nx,lbl:'Starts in',last:L.filter(s=>s<=now).pop()+D}}
+/* v8.4 · fixed schedules can be anchored to a time zone (the game runs on US Eastern time) */
+const tzOK=z=>typeof z==='string'&&/^[A-Za-z_]+\/[A-Za-z_]+$/.test(z)?z:'';
+function tzOff(tz,t){const p={};new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric',second:'numeric'}).formatToParts(new Date(t)).forEach(x=>p[x.type]=x.value);return Date.UTC(+p.year,+p.month-1,+p.day,+p.hour%24,+p.minute,+p.second)-t}
+function tzYMD(tz,t){const p={};new Intl.DateTimeFormat('en-US',{timeZone:tz,year:'numeric',month:'numeric',day:'numeric'}).formatToParts(new Date(t)).forEach(x=>p[x.type]=x.value);return [+p.year,+p.month-1,+p.day]}
+function zonedUTC(tz,y,mo,d,h,mi){const w=Date.UTC(y,mo,d,h,mi);let t=w;for(let i=0;i<2;i++)t=w-tzOff(tz,t);return t}
+function dailyWin(e,now){const d=new Date(now),L=[];const z=e.tz&&tzYMD(e.tz,now);for(let k=-1;k<=1;k++)for(const hm of e.daily){const [h,m]=hm.split(':').map(Number);L.push(z?zonedUTC(e.tz,z[0],z[1],z[2]+k,h,m):Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()+k,h,m))}L.sort((a,b)=>a-b);const D=e.dur*6e4;const cur=L.find(s=>s<=now&&now<s+D);if(cur!=null)return {st:'live',until:cur+D,lbl:'Ends in',then:L.find(s=>s>now)};const nx=L.find(s=>s>now);return {st:'soon',until:nx,lbl:'Starts in',last:L.filter(s=>s<=now).pop()+D}}
 function evState(e,now){if(e.daily&&e.daily.length&&e.kind!=='upcoming')return dailyWin(e,now);const P=x=>x?Date.parse(x):NaN,s=P(e.start),en=P(e.end),nx=P(e.next),ne=P(e.nextEnd);
   const inWin=(isNaN(s)||s<=now)&&(isNaN(en)||now<en);
   if(!isNaN(nx)&&nx<=now&&(isNaN(ne)||now<ne))return {st:'live',until:ne,lbl:'Ends in'};
@@ -2453,7 +2458,7 @@ trEl(document.body);watch();sel();
 <script>
 /* v6.2 diagnostics shown in the progress (cloud) dialog */
 (function(){function d(){var e=document.getElementById('bkdiag');if(!e)return;var vv=window.visualViewport;var cs=getComputedStyle(document.documentElement);var s=document.getElementById('screen');var r=s?s.getBoundingClientRect():null;
-e.textContent='Build 8.3 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
+e.textContent='Build 8.4 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
 document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('#syncbtn'))setTimeout(d,50)});})();
 </script>
 <script>
