@@ -1202,6 +1202,13 @@ details.rs-more{margin-top:14px}details.rs-more summary{cursor:pointer;font-weig
 #money .mv{font:700 12px var(--mono)}
 .mtr{font:700 11px var(--mono);margin-left:4px}.mtr.up{color:#4ade80}.mtr.dn{color:#ff6b6b}
 @media (max-width:720px){#money{grid-template-columns:1fr}}
+
+/* v8.9 · personal alerts */
+.almuts{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0 8px 34px}
+.almuts button{font:600 12px var(--body);padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);color:var(--mute);cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:32px}
+.almuts button i{width:9px;height:9px;border-radius:3px;background:var(--sw)}
+.almuts button[aria-pressed="true"]{color:var(--ink);border-color:color-mix(in srgb,var(--zap) 60%,transparent);background:color-mix(in srgb,var(--zap) 16%,var(--panel2))}
+.almuts .lbl{width:100%;font-size:12px;color:var(--dim)}
 </style>
 
 <div id="splash" role="img" aria-label="Brainrot Dex is starting">
@@ -1550,6 +1557,8 @@ details.rs-more{margin-top:14px}details.rs-more summary{cursor:pointer;font-weig
     <label class="alopt"><input type="checkbox" data-t="abuse" checked><span><b>Admin Abuse</b><small>10 minutes before a show starts, plus the rare-spawn lineup when it's posted</small></span></label>
     <label class="alopt"><input type="checkbox" data-t="leaks" checked><span><b>New leaks</b><small>When something new is datamined or teased</small></span></label>
     <label class="alopt"><input type="checkbox" data-t="news" checked><span><b>New codes and brainrots</b><small>As soon as they're added to the Dex</small></span></label>
+    <label class="alopt"><input type="checkbox" data-t="mine" checked><span><b>My picks</b><small>When an upcoming Admin Machine roll lands on a mutation you pick here, or a brainrot on your wishlist shows up in an Admin Abuse lineup</small></span></label>
+    <div class="almuts" id="almuts" role="group" aria-label="Mutations to watch for"></div>
   </div>
   <div class="alsnd"><label class="alopt"><input type="checkbox" id="alsndon" checked><span><b>Brainrot sounds</b><small>Each alert plays its own brainrot sound while the app is open</small></span></label>
     <div class="alsndlist" id="alsndlist"></div></div>
@@ -2053,7 +2062,7 @@ document.addEventListener('click',e=>{if(e.target.closest('#sheetshare')){e.prev
   else if(e.target.closest('#colshare')){e.preventDefault();shareCollection()}});
 
 /* v8.0 · Wishlist */
-function toggleWant(name){const w=new Set(S.want||[]);const on=!w.has(name);on?w.add(name):w.delete(name);S.want=[...w];save();render();stchips();
+function toggleWant(name){const w=new Set(S.want||[]);const on=!w.has(name);on?w.add(name):w.delete(name);S.want=[...w];save();if(window.bdAlertsResync)bdAlertsResync();render();stchips();
   if($('#dlg').open&&sheetName)openSheet(sheetName,true);toast(on?'Added to your wishlist':'Removed from your wishlist')}
 document.addEventListener('click',e=>{if(e.target.closest('#sheetwant')){e.preventDefault();if(sheetName)toggleWant(sheetName)}});
 
@@ -2501,6 +2510,12 @@ function tickLive(){const now=Date.now();if(now>=renderLive.nx||(renderBoard.nex
   let cfgKey=null,reg=null;
   const KEY='bd.alerts';
   const prefs=()=>Object.fromEntries($$('#alopts input').map(i=>[i.dataset.t,i.checked]));
+  const muts=()=>{const sv=store.get(KEY,null);if(sv&&Array.isArray(sv.muts))return sv.muts;try{const P=missingBy(),R=new Set((LV&&LV.admin&&LV.admin.rolls||[]).map(r=>r.event));if(P.owned&&R.size)return Object.entries(P.miss).filter(([k])=>R.has(k)).sort((a,b)=>b[1]-a[1]).slice(0,3).map(x=>x[0])}catch(e){}return []};
+  let MUTS=muts();
+  const me=()=>{let tz='UTC';try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC'}catch(e){}return {wish:(S.want||[]).slice(0,60),muts:MUTS,tz}};
+  const paintMuts=()=>{const el=$('#almuts');if(!el)return;el.innerHTML='<span class="lbl">Mutations you are hunting:</span>'+D.mutations.filter(m=>m.name!=='Default').map(m=>`<button type="button" data-mu="${esc(m.name)}" aria-pressed="${MUTS.includes(m.name)}" style="--sw:${m.c}"><i></i>${esc(m.name)}</button>`).join('')};
+  paintMuts();
+  $('#almuts')&&$('#almuts').addEventListener('click',e=>{const b=e.target.closest('[data-mu]');if(!b)return;const n=b.dataset.mu;MUTS=MUTS.includes(n)?MUTS.filter(x=>x!==n):[...MUTS,n];b.setAttribute('aria-pressed',String(MUTS.includes(n)))});
   const saved=store.get(KEY,null);if(saved&&saved.prefs)$$('#alopts input').forEach(i=>{if(i.dataset.t in saved.prefs)i.checked=!!saved.prefs[i.dataset.t]});
   const b64=s=>{const p='='.repeat((4-s.length%4)%4),r=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from([...r].map(c=>c.charCodeAt(0)))};
   async function getReg(){if(reg)return reg;reg=await navigator.serviceWorker.register('/sw.js');await navigator.serviceWorker.ready;return reg}
@@ -2519,14 +2534,16 @@ function tickLive(){const now=Date.now();if(now>=renderLive.nx||(renderBoard.nex
     try{const perm=await Notification.requestPermission();if(perm!=='granted'){await paint();return}
       const r=await getReg();const k=await key();if(!k)throw new Error('Alerts aren’t set up on the server yet.');
       let sub=await r.pushManager.getSubscription();if(!sub)sub=await r.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(k)});
-      const p=prefs();const res=await fetch('/api/push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sub:sub.toJSON(),prefs:p})});
+      const p=prefs();const res=await fetch('/api/push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sub:sub.toJSON(),prefs:p,me:me()})});
       if(!res.ok)throw new Error('Couldn’t save ('+res.status+')');
-      store.set(KEY,{prefs:p,t:Date.now()});$('#almsg').textContent='Saved.';toast('Alerts are on')}
+      store.set(KEY,{prefs:p,muts:MUTS,t:Date.now()});$('#almsg').textContent='Saved.';toast('Alerts are on')}
     catch(e){$('#almsg').textContent=e.message||'Something went wrong.'}
     paint()}
   async function off(){try{const sub=await current();if(sub){await fetch('/api/push',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:sub.endpoint})}).catch(()=>{});await sub.unsubscribe()}}catch(e){}
     store.set(KEY,{prefs:prefs(),off:1,t:Date.now()});$('#almsg').textContent='';toast('Alerts are off');paint()}
-  $('#albtn').onclick=async()=>{await paint();al.showModal()};
+  // Keep the server's copy of the wishlist current while alerts are on.
+  let rs=0;window.bdAlertsResync=()=>{clearTimeout(rs);rs=setTimeout(async()=>{try{const sv=store.get(KEY,null);if(!sv||sv.off||Notification.permission!=='granted')return;const sub=await current();if(!sub)return;await fetch('/api/push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sub:sub.toJSON(),prefs:sv.prefs||prefs(),me:me()})})}catch(e){}},2500)};
+  $('#albtn').onclick=async()=>{await paint();paintMuts();al.showModal()};
   $('#alx').onclick=()=>al.close();al.addEventListener('click',e=>{if(e.target===al)al.close()});
   $('#alon').onclick=on;$('#aloff').onclick=off;
   window.bdAlerts=()=>$('#albtn').click();
@@ -2652,7 +2669,7 @@ trEl(document.body);watch();sel();
 <script>
 /* v6.2 diagnostics shown in the progress (cloud) dialog */
 (function(){function d(){var e=document.getElementById('bkdiag');if(!e)return;var vv=window.visualViewport;var cs=getComputedStyle(document.documentElement);var s=document.getElementById('screen');var r=s?s.getBoundingClientRect():null;
-e.textContent='Build 8.8 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
+e.textContent='Build 8.9 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
 document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('#syncbtn'))setTimeout(d,50)});})();
 </script>
 <script>

@@ -12,7 +12,8 @@ export default async function handler(req, res) {
       if (!sub || typeof sub.endpoint !== 'string' || !/^https:\/\//.test(sub.endpoint) || !sub.keys || !sub.keys.p256dh || !sub.keys.auth)
         return res.status(400).json({ error: 'bad subscription' });
       if (JSON.stringify(sub).length > 2000) return res.status(413).json({ error: 'too large' });
-      await saveSub({ endpoint: sub.endpoint, keys: { p256dh: String(sub.keys.p256dh), auth: String(sub.keys.auth) } }, body.prefs);
+      if (JSON.stringify(body.me || {}).length > 6000) return res.status(413).json({ error: 'too large' });
+      await saveSub({ endpoint: sub.endpoint, keys: { p256dh: String(sub.keys.p256dh), auth: String(sub.keys.auth) } }, body.prefs, body.me);
       return res.status(200).json({ ok: true });
     }
     if (req.method === 'DELETE') {

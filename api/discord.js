@@ -8,6 +8,7 @@ import { redis } from '../lib/redis.js';
 import { env } from '../lib/env.js';
 import { isAdmin } from '../lib/admin.js';
 import { scheduleRolls } from '../lib/schedule.js';
+import { sendPersonal, rollPick } from '../lib/push.js';
 
 const API = 'https://discord.com/api/v10';
 export const FEEDS = ['admin-machine', 'info-leaks', 'map-updates', 'brainrot-leaks', 'brainrot-updates', 'lirili-leaks', 'ballerina-events', 'announcements', 'data-sheet', 'general', 'assets'];
@@ -114,6 +115,7 @@ async function sync(origin) {
   const before = (live.admin.rolls || []).length;
   const byAt = new Map((live.admin.rolls || []).filter(onSlot).map((r) => [r.at, { ...r, event: NAMES[String(r.event).toLowerCase()] || r.event }]));
   let changed = before - byAt.size;
+  const fresh = found.filter((r) => !byAt.has(r.at) && Date.parse(r.at) > Date.now());
   for (const r of found) {
     const old = byAt.get(r.at);
     const merged = { ...(old || {}), ...r, traits: r.traits.length ? r.traits : (old ? old.traits : []) };
@@ -124,6 +126,8 @@ async function sync(origin) {
     live.updated = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date()) + ' ET';
     await redis.set('feed:live', { ...feed, live });
   }
+  let mine = null;
+  if (fresh.length) { try { mine = []; for (const r of fresh) mine.push(await sendPersonal(rollPick(r), origin)); } catch (e) { mine = String(e.message || e); } }
   const schedule = changed ? await scheduleRolls(live.admin.rolls, origin).catch((e) => ({ error: String(e.message || e) })) : null;
   await redis.set('discord:lastSync', { at: new Date().toISOString(), found: found.length, changed });
   // Backup for the daily Vercel cron: queue a Gameflip price refresh through QStash when prices are over a day old.
@@ -135,7 +139,7 @@ async function sync(origin) {
       await fetch(`${base}/v2/publish/${origin}/api/market?sync=gameflip`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Upstash-Method': 'GET', 'Upstash-Retries': '1' } });
     }
   } catch {}
-  return { ok: true, found: found.length, changed, schedule };
+  return { ok: true, found: found.length, changed, schedule, mine };
 }
 
 async function qstashOk(req) {

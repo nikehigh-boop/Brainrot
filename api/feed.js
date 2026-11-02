@@ -5,7 +5,7 @@ import { redis } from '../lib/redis.js';
 import { isAdmin } from '../lib/admin.js';
 import { scheduleRolls, scheduleEvents } from '../lib/schedule.js';
 import { diffAlerts } from '../lib/alerts.js';
-import { sendAll } from '../lib/push.js';
+import { sendAll, sendPersonal, wishPick } from '../lib/push.js';
 
 const KEY = 'feed:live';
 
@@ -74,6 +74,7 @@ export default async function handler(req, res) {
       try { schedule = await scheduleRolls(doc.live?.admin?.rolls, origin); } catch (e) { schedule = { error: String(e.message || e) }; }
       try { schedule = { ...(schedule || {}), events: await scheduleEvents(doc.events, origin) }; } catch (e) { schedule = { ...(schedule || {}), eventsError: String(e.message || e) }; }
       try { for (const [topic, msg] of diffAlerts(prev, doc)) alerts.push({ topic, ...(await sendAll(topic, msg, origin)) }); } catch (e) { alerts.push({ error: String(e.message || e) }); }
+      try { const a = doc.abuseAlert; if (a && a.id && a.id !== prev?.abuseAlert?.id) alerts.push({ topic: 'mine', ...(await sendPersonal(wishPick(`${a.title} ${a.body}`, a.title || 'Admin Abuse lineup'), origin)) }); } catch {}
       return res.status(200).json({ ok: true, updated: Object.keys(body), schedule, alerts });
     }
     res.setHeader('Allow', 'GET, POST');
