@@ -150,7 +150,9 @@ export default async function handler(req, res) {
     }
     if (q.status) {
       const map = await channels(true);
-      return res.status(200).json({ channels: map, missing: FEEDS.filter((f) => !map[f]), lastSync: await redis.get('discord:lastSync') });
+      const guilds = [];
+      for (const g of await dget('/users/@me/guilds')) guilds.push({ name: g.name, channels: (await dget(`/guilds/${g.id}/channels`)).filter((c) => [0, 5].includes(c.type)).map((c) => c.name) });
+      return res.status(200).json({ guilds, channels: map, missing: FEEDS.filter((f) => !map[f]), lastSync: await redis.get('discord:lastSync') });
     }
     if (q.ch) {
       const map = await channels();
