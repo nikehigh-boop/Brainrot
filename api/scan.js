@@ -23,7 +23,9 @@ async function lists(origin) {
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
-  const key = env('ANTHROPIC_API_KEY');
+  // Switched off until the API account has credit. Set SCAN_ON to true to launch.
+  const SCAN_ON = false;
+  const key = SCAN_ON ? env('ANTHROPIC_API_KEY') : null;
   if (req.method === 'GET') return res.status(200).json({ ready: !!key });
   if (req.method !== 'POST') { res.setHeader('Allow', 'GET, POST'); return res.status(405).json({ error: 'method not allowed' }); }
   if (!key) return res.status(503).json({ error: 'Base scanning is not switched on yet.' });

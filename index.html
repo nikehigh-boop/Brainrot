@@ -1226,6 +1226,9 @@ details.rs-more{margin-top:14px}details.rs-more summary{cursor:pointer;font-weig
 .scanrow input[type=checkbox]{width:20px;height:20px;accent-color:var(--zap)}
 .scanspin{display:flex;align-items:center;gap:10px;padding:18px 0}.scanspin i{width:18px;height:18px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--zap);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+#scanbtn:disabled{opacity:.75;cursor:default}
+#scanbtn .soon{font:700 10px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:4px 7px;border-radius:999px;background:color-mix(in srgb,var(--zap) 20%,transparent);color:var(--zap);margin-left:6px}
 </style>
 
 <div id="splash" role="img" aria-label="Brainrot Dex is starting">
@@ -2620,7 +2623,8 @@ function renderRollStats(){const el=$('#rollstats');if(!el)return;if(!RS||!RS.to
 addEventListener('hashchange',()=>{if((location.hash||'')==='#machines')loadRollStats()});if((location.hash||'')==='#machines')setTimeout(loadRollStats,1200);
 /* v9.1 · snap your base: screenshot -> brainrots to confirm -> indexed */
 (function(){const btn=$('#scanbtn'),fi=$('#scanfile'),dl=$('#scan');if(!btn||!fi||!dl)return;
-  fetch('/api/scan').then(r=>r.ok?r.json():null).then(j=>{if(j&&j.ready)btn.hidden=false}).catch(()=>{});
+  btn.hidden=false;btn.disabled=true;btn.innerHTML='📷 Scan my base <span class="soon">Coming soon</span>';btn.title='Snap a screenshot of your base and index everything in it. Coming soon.';
+  fetch('/api/scan').then(r=>r.ok?r.json():null).then(j=>{if(j&&j.ready){btn.disabled=false;btn.textContent='📷 Scan my base';btn.title=''}}).catch(()=>{});
   btn.onclick=()=>fi.click();
   const shrink=f=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{const k=Math.min(1,1568/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);ok(c.toDataURL('image/jpeg',.85))};im.onerror=()=>no(new Error('Could not read that image'));im.src=u});
   let rows=[];
@@ -2713,7 +2717,7 @@ trEl(document.body);watch();sel();
 <script>
 /* v6.2 diagnostics shown in the progress (cloud) dialog */
 (function(){function d(){var e=document.getElementById('bkdiag');if(!e)return;var vv=window.visualViewport;var cs=getComputedStyle(document.documentElement);var s=document.getElementById('screen');var r=s?s.getBoundingClientRect():null;
-e.textContent='Build 9.1 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
+e.textContent='Build 9.1.1 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
 document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('#syncbtn'))setTimeout(d,50)});})();
 </script>
 <script>
