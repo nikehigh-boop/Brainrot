@@ -1233,6 +1233,18 @@ details.rs-more{margin-top:14px}details.rs-more summary{cursor:pointer;font-weig
 /* v9.2 · animated hero clip */
 .sheet .hero video.hclip{width:min(340px,86%);aspect-ratio:1;object-fit:cover;border-radius:24px;box-shadow:0 14px 30px rgba(0,0,0,.45);background:#0e100c}
 @media (max-width:720px){.sheet .hero video.hclip{width:min(260px,72%)}}
+
+/* v9.3 · Dexo, the mascot (original 3D brain-bot, three.js, lazy-loaded) */
+.dexo{position:relative;height:300px;margin:0 0 16px;border-radius:26px;overflow:hidden;background:#0b0d09;border:1px solid color-mix(in srgb,var(--zap) 22%,var(--line));box-shadow:inset 0 0 0 1px rgba(255,255,255,.02),0 18px 40px rgba(0,0,0,.35)}
+.dexo canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:pointer;touch-action:pan-y}
+.dexo::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(11,13,9,.92) 0%,rgba(11,13,9,.55) 30%,transparent 55%)}
+.dexo-say{position:absolute;left:22px;top:50%;transform:translateY(-50%);z-index:2;max-width:min(42%,340px);display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.dexo-say b{font:900 22px/1.15 var(--display);font-stretch:112%;color:var(--ink);text-wrap:balance}
+.dexo-say b em{font-style:normal;color:var(--zap)}
+.dexo-say small{font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.dexo.still canvas{cursor:default}
+.dexo .dx-fallback{position:absolute;right:8%;top:50%;transform:translateY(-50%);font-size:84px}
+@media (max-width:720px){.dexo{height:310px}.dexo::after{background:linear-gradient(180deg,transparent 45%,rgba(11,13,9,.85) 100%)}.dexo-say{left:16px;right:16px;top:auto;bottom:14px;transform:none;max-width:none}.dexo-say b{font-size:18px}}
 </style>
 
 <div id="splash" role="img" aria-label="Brainrot Dex is starting">
@@ -1357,6 +1369,8 @@ details.rs-more{margin-top:14px}details.rs-more summary{cursor:pointer;font-weig
   <section class="view" id="v-plan" hidden>
     <div class="vhead"><div><div class="eyebrow">Your next 24 hours</div><h1>Play Now</h1>
       <p class="lede">The best times to be online, ranked. It weighs every Admin Machine roll (event, boost and traits), each event wave's mutation, Chill Hour and Admin Abuse, plus the mutations you're still missing. Times are in your time zone.</p></div></div>
+    <div class="dexo" id="dexo"><canvas id="dexoc" aria-label="Dexo, the Brainrot Dex mascot. Tap him."></canvas>
+      <div class="dexo-say" id="dexosay" aria-live="polite"><span class="eyebrow">Dexo says</span><b id="dexotxt">Checking the schedule…</b><small>Tap me</small></div></div>
     <div class="planbest" id="planbest"></div>
     <p class="planmiss" id="planmiss" hidden></p>
     <div class="group-h"><h2>Full timeline</h2><span class="sub">next 24 hours</span></div>
@@ -2604,6 +2618,7 @@ function icsFor(m){const f=t=>new Date(t).toISOString().replace(/[-:]/g,'').repl
 function renderPlan(){const now=Date.now(),M=planMoments(now);renderPlan.M=M;const v=$('#v-plan');
   const best=M.filter(m=>m.kind!=='daily'&&m.end>now).slice().sort((a,b)=>b.score-a.score||a.t-b.t).slice(0,3);
   const hint=$('#planhint');if(hint){const b=M.filter(m=>m.kind!=='daily'&&m.end>now).sort((a,b)=>b.score-a.score)[0];hint.hidden=!b;if(b)hint.innerHTML=`<span>⭐</span><span>Best window today: <b>${b.t<=now?'Now':tLoc(b.t)}</b> · ${esc(b.title)}</span><span class="sub" style="margin-left:auto">Play Now ›</span>`}
+  dexoSay(best[0],now);
   if(!v||v.hidden)return;
   $('#planbest').innerHTML=best.length?best.map((m,i)=>`<article class="pcard" style="--pc-c:${/^#/.test(m.c)?m.c:(String(m.c).match(/#[0-9a-f]{6}/i)||['#c5f33c'])[0]}"><span class="rk">${['Top pick','Runner-up','Also good'][i]||''}</span>
     <div class="tm"><b>${m.t<=now?'Now':tLoc(m.t)}</b><span>${m.t<=now?'live':`in <span data-until="${m.t}">${hms((m.t-now)/1e3)}</span>`} · ${dLoc(m.t)}</span></div>
@@ -2649,6 +2664,26 @@ addEventListener('hashchange',()=>{if((location.hash||'')==='#machines')loadRoll
   dl.addEventListener('click',e=>{if(e.target===dl)return dl.close();const a=e.target.closest('[data-sx]');if(!a)return;const k=a.dataset.sx;
     if(k==='close')dl.close();if(k==='again'){dl.close();fi.click()}
     if(k==='add'){const pick=rows.filter(x=>x.on&&BY[norm(x.name)]);pick.forEach(x=>S.inv.push({id:uid(),n:BY[norm(x.name)].name,m:mutBy[x.mutation]?x.mutation:'Default',t:x.traits||[]}));dl.close();if(pick.length){changed();toast(`Added ${pick.length} to your Dex`)}}})})();
+/* v9.3 · Dexo: lazy-loads /dexo.js (three.js) only when Play Now opens; pauses offscreen */
+let DX=null,dxLoading=false,dxLive=false,dxHopT=0;
+function dexoSay(b,now){const el=$('#dexotxt');if(!el)return;
+  if(!b){el.textContent='Waiting on the next Admin Machine roll.';dxLive=false;return}
+  const live=b.t<=now;dxLive=live;
+  el.innerHTML=live?`It's go time: <em>${esc(b.title)}</em> is live now!`:`Best window: <em>${esc(b.title)}</em> at ${tLoc(b.t)}${b.t-now<36e5?` (in ${Math.max(1,Math.round((b.t-now)/6e4))} min)`:''}.`;
+  if(DX){if(live)DX.setMood('wow');else DX.setMood('idle')}}
+function gl(){try{const c=document.createElement('canvas');return !!(c.getContext('webgl2')||c.getContext('webgl'))}catch(e){return false}}
+async function initDexo(){if(DX||dxLoading)return;const box=$('#dexo'),cv=$('#dexoc');if(!box||!cv)return;
+  if(!gl()){box.classList.add('still');box.insertAdjacentHTML('beforeend','<span class="dx-fallback" aria-hidden="true">🤖</span>');return}
+  dxLoading=true;try{const m=await import('/dexo.js?v=1');DX=m.mount(cv,{bg:'#0b0d09'});
+    const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(reduce){setTimeout(()=>DX.stop(),900);box.classList.add('still')}
+    else{DX.react('wave');DX.react('happy')}
+    if(dxLive)DX.setMood('wow');
+    if('IntersectionObserver' in window)new IntersectionObserver(es=>{es.forEach(e=>{if(reduce)return;e.isIntersecting&&!document.hidden?DX.start():DX.stop()})}).observe(box);
+    document.addEventListener('visibilitychange',()=>{if(reduce)return;document.hidden?DX.stop():(location.hash==='#plan'&&DX.start())});
+    clearInterval(dxHopT);dxHopT=setInterval(()=>{if(DX&&dxLive&&!document.hidden)DX.react('hop')},9000)}
+  catch(e){box.classList.add('still');box.insertAdjacentHTML('beforeend','<span class="dx-fallback" aria-hidden="true">🤖</span>')}dxLoading=false}
+addEventListener('hashchange',()=>{if((location.hash||'')==='#plan')initDexo();else if(DX)DX.stop()});if((location.hash||'')==='#plan')setTimeout(initDexo,600);
 setInterval(renderPlan,6e4);
 let botInfo=null;async function loadBot(){if(botInfo)return;try{const r=await fetch('/api/discord?bot=1');if(!r.ok)return;botInfo=await r.json();const c=$('#botcard');if(!c||!botInfo.ready||!botInfo.addToServer)return;$('#botsrv').href=botInfo.addToServer;$('#botme').href=botInfo.addToApps;c.hidden=false}catch(e){}}
 addEventListener('hashchange',()=>{if((location.hash||'')==='#plan')loadBot()});if((location.hash||'')==='#plan')setTimeout(loadBot,1500);setTimeout(renderPlan,1500);
@@ -2724,7 +2759,7 @@ trEl(document.body);watch();sel();
 <script>
 /* v6.2 diagnostics shown in the progress (cloud) dialog */
 (function(){function d(){var e=document.getElementById('bkdiag');if(!e)return;var vv=window.visualViewport;var cs=getComputedStyle(document.documentElement);var s=document.getElementById('screen');var r=s?s.getBoundingClientRect():null;
-e.textContent='Build 9.2 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
+e.textContent='Build 9.3 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
 document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('#syncbtn'))setTimeout(d,50)});})();
 </script>
 <script>
