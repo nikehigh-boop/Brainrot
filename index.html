@@ -1697,7 +1697,7 @@ let syncState='local';
 async function push(){if(!REF)return;if(busy){dirty=true;return}busy=true;setSync('busy');
   try{await REF.set(JSON.parse(JSON.stringify(S)));setSync('cloud')}catch(e){setSync('err')}busy=false;if(dirty){dirty=false;push()}}
 const feedFile=()=>fetch('feed.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(f=>{if(f)applyFeed(f)}).catch(()=>{});
-const loadFeed=()=>fetch('/api/feed',{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(f=>{if(f)applyFeed(f)}).catch(feedFile);
+const loadFeed=()=>fetch('/api/feed',{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(f=>{if(f)applyFeed(f);if(typeof renderPlan==='function')renderPlan()}).catch(feedFile);
 let SB=null,USER=null,lastUid;
 const api=async(method,body)=>{const tok=SB.session?await SB.session.getToken():null;if(!tok)throw new Error('signed out');
   const r=await fetch('/api/state',{method,headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,cache:'no-store'});
@@ -2759,7 +2759,7 @@ trEl(document.body);watch();sel();
 <script>
 /* v6.2 diagnostics shown in the progress (cloud) dialog */
 (function(){function d(){var e=document.getElementById('bkdiag');if(!e)return;var vv=window.visualViewport;var cs=getComputedStyle(document.documentElement);var s=document.getElementById('screen');var r=s?s.getBoundingClientRect():null;
-e.textContent='Build 9.3 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
+e.textContent='Build 9.3.1 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
 document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('#syncbtn'))setTimeout(d,50)});})();
 </script>
 <script>
