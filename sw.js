@@ -1,7 +1,7 @@
 // Brainrot Dex service worker: push alerts, plus offline caching.
 // - /a/* art and sounds: cache first (file names change when the content does)
 // - the app page and the live feed: network first, cached copy when offline
-const CACHE = 'bd-v3';
+const CACHE = 'bd-v4';
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
