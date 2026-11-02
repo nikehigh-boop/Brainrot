@@ -94,13 +94,20 @@ async function sync(origin) {
   const ch = map['admin-machine'];
   if (!ch) return { ok: false, reason: 'no admin-machine channel found in the bot’s servers' };
   const msgs = await dget(`/channels/${ch.id}/messages?limit=6`);
-  const found = msgs.flatMap(rollsFrom);
-  if (!found.length) return { ok: true, found: 0 };
+  const NAMES = { 'dia de muertos': 'Día de Muertos' };
+  const feed0 = (await redis.get('feed:live')) || {};
+  const hrs = (feed0.live && feed0.live.admin && feed0.live.admin.hours) || [4, 10, 16, 22];
+  // Only keep rolls on the game's fixed UTC slots (STB Hub's bot sometimes posts an hour off around clock changes).
+  const found = msgs.flatMap(rollsFrom)
+    .map((r) => ({ ...r, event: NAMES[r.event.toLowerCase()] || r.event }))
+    .filter((r) => { const d = new Date(r.at); return hrs.includes(d.getUTCHours()) && d.getUTCMinutes() === 30; });
   const feed = (await redis.get('feed:live')) || {};
   const live = feed.live || { admin: { hours: [4, 10, 16, 22], minute: 30, rolls: [] } };
   live.admin = live.admin || { hours: [4, 10, 16, 22], minute: 30, rolls: [] };
-  const byAt = new Map((live.admin.rolls || []).map((r) => [r.at, r]));
-  let changed = 0;
+  const onSlot = (r) => { const d = new Date(r.at); return live.admin.hours.includes(d.getUTCHours()); };
+  const before = (live.admin.rolls || []).length;
+  const byAt = new Map((live.admin.rolls || []).filter(onSlot).map((r) => [r.at, { ...r, event: NAMES[String(r.event).toLowerCase()] || r.event }]));
+  let changed = before - byAt.size;
   for (const r of found) {
     const old = byAt.get(r.at);
     const merged = { ...(old || {}), ...r, traits: r.traits.length ? r.traits : (old ? old.traits : []) };
