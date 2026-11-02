@@ -2194,7 +2194,7 @@ function applyFeed(f){if(!f||typeof f!=='object')return;
   if(f.pulse&&typeof f.pulse==='object')['now','peak24','allTime','minutes','favs','version','updated','asof'].forEach(k=>{if(f.pulse[k]!=null)P[k]=f.pulse[k]});
   let added=0;if(Array.isArray(f.brainrots))f.brainrots.forEach(nb=>{if(!nb||typeof nb.name!=='string'||BY[norm(nb.name)])return;
     const b={name:nb.name.slice(0,60),display:nb.name.slice(0,60),r:R[nb.r]?nb.r:'secret',income:typeof nb.income==='number'?nb.income:null,cost:typeof nb.cost==='number'?nb.cost:null,src:Array.isArray(nb.src)?nb.src.map(String):[],flags:['new'].concat(nb.datamined?['datamined']:[]),est:!!nb.est,retired:false,added:nb.added||null,art:null,no:B.length+1,addedN:addedN(nb.added),pay:null};
-    b.pay=b.cost&&b.income?b.cost/b.income:null;B.push(b);index(b);added++});
+    b.pay=b.cost&&b.income?b.cost/b.income:null;B.push(b);index(b);added++});if(added&&typeof renderLeaks==='function')setTimeout(renderLeaks,0);
   const okArt=u=>typeof u==='string'&&(/^https:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/(emojis|attachments)\//.test(u)||/^\/api\/art\//.test(u)||/^data:image\/(webp|png|jpeg);base64,/.test(u));
   let arted=0;const setArt=(n,u,k)=>{const b=BY[norm(n)];if(!b||!okArt(u)||(IMG[b.name]&&!k))return;IMG[b.name]=u;if(!b.art)b.art='icon';arted++};
   if(Array.isArray(f.brainrots))f.brainrots.forEach(nb=>{if(nb&&typeof nb.name==='string'&&nb.img)setArt(nb.name,nb.img)});
@@ -2458,7 +2458,7 @@ trEl(document.body);watch();sel();
 <script>
 /* v6.2 diagnostics shown in the progress (cloud) dialog */
 (function(){function d(){var e=document.getElementById('bkdiag');if(!e)return;var vv=window.visualViewport;var cs=getComputedStyle(document.documentElement);var s=document.getElementById('screen');var r=s?s.getBoundingClientRect():null;
-e.textContent='Build 8.4.1 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
+e.textContent='Build 8.4.2 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
 document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('#syncbtn'))setTimeout(d,50)});})();
 </script>
 <script>
