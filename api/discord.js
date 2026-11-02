@@ -126,6 +126,15 @@ async function sync(origin) {
   }
   const schedule = changed ? await scheduleRolls(live.admin.rolls, origin).catch((e) => ({ error: String(e.message || e) })) : null;
   await redis.set('discord:lastSync', { at: new Date().toISOString(), found: found.length, changed });
+  // Backup for the daily Vercel cron: queue a Gameflip price refresh through QStash when prices are over a day old.
+  try {
+    const gf = await redis.get('mkt:gf');
+    const token = env('QSTASH_TOKEN');
+    if (token && (!gf || !gf.asof || Date.now() - Date.parse(gf.asof) > 26 * 36e5) && (await redis.set('mkt:gf:queued', 1, { nx: true, ex: 3 * 3600 }))) {
+      const base = (env('QSTASH_URL') || 'https://qstash.upstash.io').replace(/\/$/, '');
+      await fetch(`${base}/v2/publish/${origin}/api/market?sync=gameflip`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Upstash-Method': 'GET', 'Upstash-Retries': '1' } });
+    }
+  } catch {}
   return { ok: true, found: found.length, changed, schedule };
 }
 

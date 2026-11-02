@@ -1188,6 +1188,20 @@ nav.tabs a[data-tab="events"] .n{background:transparent;color:var(--live);font-s
 .rs-rec td{padding:7px 8px;border-top:1px solid var(--line);vertical-align:top}
 .rs-rec td:first-child{font-family:var(--mono);color:var(--mute);white-space:nowrap}
 details.rs-more{margin-top:14px}details.rs-more summary{cursor:pointer;font-weight:700;padding:8px 0}
+
+/* v8.8 · money brain */
+#money{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px;margin:0 0 18px}
+#money .mb{padding:16px;border-radius:20px;background:var(--panel);border:1px solid var(--line);min-width:0}
+#money .mb.hero{background:linear-gradient(150deg,color-mix(in srgb,var(--zap) 14%,var(--panel2)),var(--panel));border-color:color-mix(in srgb,var(--zap) 35%,transparent)}
+#money .big{font:900 40px/1 var(--display);font-stretch:120%;margin:6px 0 4px}
+#money h3{margin:0 0 8px;font-size:15px}
+#money ul{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+#money li{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;font-size:13px}
+#money li small{color:var(--dim)}
+#money .up{color:#4ade80}#money .dn{color:#ff6b6b}
+#money .mv{font:700 12px var(--mono)}
+.mtr{font:700 11px var(--mono);margin-left:4px}.mtr.up{color:#4ade80}.mtr.dn{color:#ff6b6b}
+@media (max-width:720px){#money{grid-template-columns:1fr}}
 </style>
 
 <div id="splash" role="img" aria-label="Brainrot Dex is starting">
@@ -1260,6 +1274,7 @@ details.rs-more{margin-top:14px}details.rs-more summary{cursor:pointer;font-weig
     <div class="vhead"><div><div class="eyebrow">27 separate indexes</div><h1>Collection</h1>
       <p class="lede">The game keeps a separate index for every mutation. Index 85% of a mutation and your base takes on its colour. Drop under 85% for two weeks and the colour goes away.</p></div></div>
     <div class="row" style="margin:-6px 0 14px"><button class="btn sharebtn" type="button" id="colshare">Share my Dex</button></div>
+    <div id="money" hidden></div>
     <div class="mgrid" id="mgrid"></div>
     <div class="group-h" id="colhead"><h2 id="colh">Default index</h2><span class="sub" id="colsub"></span></div>
     <div class="controls">
@@ -1772,7 +1787,7 @@ $('#pk').addEventListener('click',e=>{const d=$('#pk');if(e.target===d){d.close(
 /* Collection: per-mutation progress toward the 85% base colour */
 let colM='Default',colMiss=false;
 const POOL=()=>B.filter(isPool);
-function renderCol(){const pool=POOL(),tot=pool.length,need=Math.ceil(tot*.85);
+function renderCol(){if(typeof renderMoney==='function')renderMoney();const pool=POOL(),tot=pool.length,need=Math.ceil(tot*.85);
   $('#mgrid').innerHTML=D.mutations.map(m=>{const n=pool.filter(b=>IDX[m.name]&&IDX[m.name].has(b.name)).length,p=tot?n/tot:0,done=n>=need;
     return `<button class="mcard ${done?'done':''}" data-cm="${esc(m.name)}" aria-pressed="${m.name===colM}" style="--sw:${m.c}"><span class="mh"><i></i><b>${esc(m.name)}</b>${done?'<span class="okb">Base colour</span>':''}</span><span class="mbar"><i style="width:${p*100}%"></i><s style="left:85%"></s></span><span class="mn mono">${n}/${tot}<span class="sub">${done?'unlocked':(need-n)+' to 85%'}</span></span></button>`}).join('');
   const m=mutBy[colM],set=IDX[colM]||new Set(),n=pool.filter(b=>set.has(b.name)).length;
@@ -2176,11 +2191,31 @@ function mkEstimate(name,mut){if(!MK)return null;const key=name+'|'+(mut||'');if
   const pts=[];rows.forEach(r=>{pts.push(r.price);if(r.kind==='sold')pts.push(r.price)});
   if(sm&&sm.median){for(let i=0;i<Math.min(sm.count,6);i++)pts.push(sm.median)}
   return MK.est[key]=pts.length?{v:mkMedian(pts),n:rows.length+(sm?sm.count:0),exact}:null}
-function mkTag(name){if(!MK)return'';const e=mkEstimate(name);return e?`<div class="mprice" title="Typical market price">≈ ${usd(e.v)}</div>`:''}
+/* v8.8 · money brain: collection value, sold-price trends, movers */
+function mkTrend(name){if(!MK||!MK.gfBy)return null;if(!MK.tr)MK.tr={};if(name in MK.tr)return MK.tr[name];const now=Date.now(),D10=10*864e5,D45=45*864e5;
+  const sold=(MK.gfBy[name]||[]).filter(i=>i.k==='sold'&&i.at),age=i=>now-Date.parse(i.at);
+  const a=sold.filter(i=>age(i)<=D10).map(i=>i.p),b=sold.filter(i=>age(i)>D10&&age(i)<=D45).map(i=>i.p);
+  if(a.length<2||b.length<2)return MK.tr[name]=null;const x=mkMedian(a),y=mkMedian(b);if(!(y>0))return MK.tr[name]=null;
+  return MK.tr[name]={pct:Math.round((x-y)/y*100),now:x,was:y,n:a.length+b.length}}
+function trTag(name){const t=mkTrend(name);if(!t||Math.abs(t.pct)<5)return'';return `<span class="mtr ${t.pct>0?'up':'dn'}" title="Median sold price, last 10 days vs the month before">${t.pct>0?'▲':'▼'}${Math.abs(t.pct)}%</span>`}
+function renderMoney(){const el=$('#money');if(!el)return;if(!MK||!MK.gf){el.hidden=true;return}
+  const rows=S.inv.map(x=>({x,e:mkEstimate(x.n,x.m)})).filter(r=>r.e);
+  const tot=rows.reduce((a,r)=>a+r.e.v,0),top=rows.slice().sort((a,b)=>b.e.v-a.e.v).slice(0,5);
+  const names=[...new Set(S.inv.map(x=>x.n))],mine=names.map(n=>({n,t:mkTrend(n)})).filter(r=>r.t&&Math.abs(r.t.pct)>=5).sort((a,b)=>Math.abs(b.t.pct)-Math.abs(a.t.pct)).slice(0,4);
+  const all=Object.keys(MK.gfBy).map(n=>({n,t:mkTrend(n)})).filter(r=>r.t&&BY[norm(r.n)]),ups=all.filter(r=>r.t.pct>=10).sort((a,b)=>b.t.pct-a.t.pct).slice(0,4),dns=all.filter(r=>r.t.pct<=-10).sort((a,b)=>a.t.pct-b.t.pct).slice(0,3);
+  const nm=n=>{const b=BY[norm(n)];return b?b.display:n},li=r=>`<li><span><button class="lnk" data-open="${esc(BY[norm(r.n)]?BY[norm(r.n)].name:r.n)}">${esc(nm(r.n))}</button> <small>${usd(r.t.was)} → ${usd(r.t.now)}</small></span><span class="mv ${r.t.pct>0?'up':'dn'}">${r.t.pct>0?'▲':'▼'} ${Math.abs(r.t.pct)}%</span></li>`;
+  el.hidden=false;
+  el.innerHTML=`<div class="mb hero"><div class="eyebrow">Your Dex on the market</div>${rows.length?`<div class="big">≈ ${usd(tot)}</div><span class="sub">${rows.length} of ${S.inv.length} indexed copies have a price · by mutation where we have 2+ sales</span>
+    <ul>${top.map(r=>{const b=BY[norm(r.x.n)];return `<li><span><button class="lnk" data-open="${esc(b?b.name:r.x.n)}">${esc(b?b.display:r.x.n)}</button> <small>${esc(r.x.m)}</small></span><b class="mono">${usd(r.e.v)}</b></li>`}).join('')}</ul>
+    ${mine.length?`<h3 style="margin-top:14px">Yours that moved</h3><ul>${mine.map(li).join('')}</ul>`:''}`
+    :`<div class="big">$0</div><span class="sub">Index the brainrots you own and this shows what they sell for, with your most valuable copies.</span>`}</div>
+   <div class="mb"><h3>Market this month</h3>${ups.length||dns.length?`${ups.length?`<div class="eyebrow">Rising</div><ul>${ups.map(li).join('')}</ul>`:''}${dns.length?`<div class="eyebrow" style="margin-top:12px">Falling</div><ul>${dns.map(li).join('')}</ul>`:''}`:'<p class="sub">Not enough recent sales to call a trend yet.</p>'}
+   <p class="sub" style="margin:12px 0 0;font-size:12px">Median Gameflip sold price, last 10 days vs the month before. Reference only: real-money trading breaks Epic's rules.</p></div>`}
+function mkTag(name){if(!MK)return'';const e=mkEstimate(name);return e?`<div class="mprice" title="Typical market price">≈ ${usd(e.v)}${trTag(name)}</div>`:''}
 async function mkLoad(){try{const j=u=>fetch(u).then(r=>r.ok?r.json():null).catch(()=>null);const [a,b,g]=await Promise.all([j('/market.json'),j('/api/market'),j('/api/market?gf=1')]);
   if(a)MK.snap=a;if(b&&b.summary)Object.entries(b.summary).forEach(([k,v])=>{MK.sum[k]=typeof v==='string'?JSON.parse(v):v});
   if(g&&g.items){MK.gf=g;MK.gfBy={};g.items.forEach(i=>(MK.gfBy[i.n]=MK.gfBy[i.n]||[]).push(i))}
-  MK.est={};stchips();render();
+  MK.est={};MK.tr={};stchips();render();renderMoney();
   if(sheetName&&$('#dlg').open)mkRender(sheetName);if(typeof renderTrade==='function')renderTrade()}catch(e){}}
 function mkVid(){try{let v=localStorage.getItem('bd.vid');if(!v){v=(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));localStorage.setItem('bd.vid',v)}return v}catch(e){return 'anon-'+Date.now()}}
 const KLBL={sold:'Sold',bought:'Bought',listed:'Listed'};
@@ -2617,7 +2652,7 @@ trEl(document.body);watch();sel();
 <script>
 /* v6.2 diagnostics shown in the progress (cloud) dialog */
 (function(){function d(){var e=document.getElementById('bkdiag');if(!e)return;var vv=window.visualViewport;var cs=getComputedStyle(document.documentElement);var s=document.getElementById('screen');var r=s?s.getBoundingClientRect():null;
-e.textContent='Build 8.7 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
+e.textContent='Build 8.8 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
 document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('#syncbtn'))setTimeout(d,50)});})();
 </script>
 <script>
