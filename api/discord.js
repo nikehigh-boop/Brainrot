@@ -10,7 +10,7 @@ import { isAdmin } from '../lib/admin.js';
 import { scheduleRolls } from '../lib/schedule.js';
 
 const API = 'https://discord.com/api/v10';
-export const FEEDS = ['admin-machine', 'info-leaks', 'map-updates', 'brainrot-leaks', 'brainrot-updates', 'lirili-leaks', 'ballerina-events', 'announcements', 'data-sheet', 'general'];
+export const FEEDS = ['admin-machine', 'info-leaks', 'map-updates', 'brainrot-leaks', 'brainrot-updates', 'lirili-leaks', 'ballerina-events', 'announcements', 'data-sheet', 'general', 'assets'];
 
 async function dget(path) {
   const token = env('DISCORD_BOT_TOKEN');
