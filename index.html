@@ -1213,6 +1213,19 @@ details.rs-more{margin-top:14px}details.rs-more summary{cursor:pointer;font-weig
 /* v9.0 · discord bot card */
 .botcard{margin-top:22px;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:16px 18px;border-radius:20px;background:linear-gradient(120deg,color-mix(in srgb,#5865f2 26%,var(--panel2)),var(--panel));border:1px solid color-mix(in srgb,#5865f2 45%,transparent)}
 .botcard h3{margin:2px 0 6px}.botcard .sub{margin:0;max-width:56ch}.botcard code{font:600 12px var(--mono);padding:2px 6px;border-radius:6px;background:rgba(0,0,0,.3)}
+
+/* v9.1 · snap your base */
+#scan{border:0;padding:0;background:transparent;max-width:min(560px,calc(100vw - 24px));width:100%;color:var(--ink)}
+#scan::backdrop{background:rgba(0,0,0,.6)}
+.scanbox{background:var(--panel2);border:1px solid var(--line);border-radius:24px;padding:18px;max-height:min(80vh,720px);overflow:auto}
+.scanbox h2{margin:0 0 4px}
+.scanbox .shot{width:100%;max-height:220px;object-fit:contain;border-radius:14px;background:var(--deep);margin:10px 0}
+.scanrow{display:grid;grid-template-columns:auto 44px 1fr auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.scanrow .bi{width:44px;height:44px}.scanrow .bi img{width:100%;height:100%;object-fit:contain}
+.scanrow select{min-height:36px;max-width:130px}
+.scanrow input[type=checkbox]{width:20px;height:20px;accent-color:var(--zap)}
+.scanspin{display:flex;align-items:center;gap:10px;padding:18px 0}.scanspin i{width:18px;height:18px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--zap);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 
 <div id="splash" role="img" aria-label="Brainrot Dex is starting">
@@ -1284,7 +1297,7 @@ details.rs-more{margin-top:14px}details.rs-more summary{cursor:pointer;font-weig
   <section class="view" id="v-collection" hidden>
     <div class="vhead"><div><div class="eyebrow">27 separate indexes</div><h1>Collection</h1>
       <p class="lede">The game keeps a separate index for every mutation. Index 85% of a mutation and your base takes on its colour. Drop under 85% for two weeks and the colour goes away.</p></div></div>
-    <div class="row" style="margin:-6px 0 14px"><button class="btn sharebtn" type="button" id="colshare">Share my Dex</button></div>
+    <div class="row" style="margin:-6px 0 14px"><button class="btn sharebtn" type="button" id="colshare">Share my Dex</button><button class="btn" type="button" id="scanbtn" hidden>📷 Scan my base</button><input type="file" id="scanfile" accept="image/*" hidden></div>
     <div id="money" hidden></div>
     <div class="mgrid" id="mgrid"></div>
     <div class="group-h" id="colhead"><h2 id="colh">Default index</h2><span class="sub" id="colsub"></span></div>
@@ -1536,6 +1549,7 @@ details.rs-more{margin-top:14px}details.rs-more summary{cursor:pointer;font-weig
 <dialog id="setup" aria-labelledby="seth"><div class="setbox" id="setbox"></div></dialog>
 <dialog id="dlg" aria-label="Brainrot details"><div id="dlgc"></div></dialog>
 <dialog id="pk" aria-label="Index a brainrot"><div id="pkc"></div></dialog>
+<dialog id="scan" aria-labelledby="scanh"><div class="scanbox" id="scanc"></div></dialog>
 <dialog id="bk" aria-label="Backup and sync"><div class="bkbox">
   <div class="row" style="justify-content:space-between;flex-wrap:nowrap"><h2>Your progress</h2><button class="x" aria-label="Close" id="bkx" style="position:static"><svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <p class="sub" id="bkst"></p>
@@ -2604,6 +2618,26 @@ function renderRollStats(){const el=$('#rollstats');if(!el)return;if(!RS||!RS.to
   <p class="sub" style="margin:10px 0 0">Counts every roll posted to STB Hub's #admin-machine since we started logging. Past rolls don't change future odds; this shows what the machine has actually done.</p>
   <details class="rs-more"><summary>Last ${RS.recent.length} rolls</summary><table class="rs-rec"><tbody>${RS.recent.map(r=>`<tr><td>${dLoc(Date.parse(r.at))} ${tLoc(Date.parse(r.at))}</td><td><b style="color:${col(r.event)}">${esc(r.event)}</b><br><span class="sub">${esc(r.boost)}</span></td><td class="sub">${esc((r.traits||[]).join(', '))}</td></tr>`).join('')}</tbody></table></details>`}
 addEventListener('hashchange',()=>{if((location.hash||'')==='#machines')loadRollStats()});if((location.hash||'')==='#machines')setTimeout(loadRollStats,1200);
+/* v9.1 · snap your base: screenshot -> brainrots to confirm -> indexed */
+(function(){const btn=$('#scanbtn'),fi=$('#scanfile'),dl=$('#scan');if(!btn||!fi||!dl)return;
+  fetch('/api/scan').then(r=>r.ok?r.json():null).then(j=>{if(j&&j.ready)btn.hidden=false}).catch(()=>{});
+  btn.onclick=()=>fi.click();
+  const shrink=f=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{const k=Math.min(1,1568/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);ok(c.toDataURL('image/jpeg',.85))};im.onerror=()=>no(new Error('Could not read that image'));im.src=u});
+  let rows=[];
+  const paint=(html)=>{$('#scanc').innerHTML=html;if(!dl.open)dl.showModal()};
+  fi.onchange=async()=>{const f=fi.files&&fi.files[0];fi.value='';if(!f)return;let img;try{img=await shrink(f)}catch(e){toast(e.message);return}
+    paint(`<h2 id="scanh">Scanning your base</h2><img class="shot" src="${img}" alt="Your screenshot"><div class="scanspin"><i></i><span>Reading name tags…</span></div>`);
+    try{const r=await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:img})});const j=await r.json().catch(()=>({}));
+      if(!r.ok)throw new Error(j.error||'Scan failed');rows=(j.found||[]).filter(x=>BY[norm(x.name)]).flatMap(x=>Array.from({length:x.count||1},()=>({...x,on:true})));
+      if(!rows.length){paint(`<h2 id="scanh">Nothing found</h2><img class="shot" src="${img}" alt=""><p class="sub">Couldn't read any brainrot name tags. Try a closer screenshot where the floating labels are readable.</p><div class="row"><button class="btn" data-sx="again">Try another</button><button class="btn" data-sx="close">Close</button></div>`);return}
+      paint(`<h2 id="scanh">Found ${rows.length} brainrot${rows.length>1?'s':''}</h2><p class="sub" style="margin:0">Check each one, fix any mutation, then add them to your Dex.</p><img class="shot" src="${img}" alt="">
+        <div>${rows.map((x,i)=>{const b=BY[norm(x.name)];return `<label class="scanrow"><input type="checkbox" data-si="${i}" checked><span class="bi">${b?art(b):''}</span><span><b>${esc(b?b.display:x.name)}</b>${x.traits.length?`<br><small class="sub">${esc(x.traits.join(', '))}</small>`:''}</span><select data-sm="${i}" aria-label="Mutation">${D.mutations.map(m=>`<option${m.name===x.mutation?' selected':''}>${esc(m.name)}</option>`).join('')}</select></label>`}).join('')}</div>
+        <div class="row" style="margin-top:12px"><button class="btn primary" data-sx="add">Add to my Dex</button><button class="btn" data-sx="close">Cancel</button></div><p class="sub" style="font-size:12px">Read by AI from your screenshot, so double-check before adding.</p>`)}
+    catch(e){paint(`<h2 id="scanh">Scan failed</h2><p class="sub">${esc(e.message)}</p><div class="row"><button class="btn" data-sx="close">Close</button></div>`)}};
+  dl.addEventListener('change',e=>{const c=e.target.closest('[data-si]'),m=e.target.closest('[data-sm]');if(c)rows[+c.dataset.si].on=c.checked;if(m)rows[+m.dataset.sm].mutation=m.value});
+  dl.addEventListener('click',e=>{if(e.target===dl)return dl.close();const a=e.target.closest('[data-sx]');if(!a)return;const k=a.dataset.sx;
+    if(k==='close')dl.close();if(k==='again'){dl.close();fi.click()}
+    if(k==='add'){const pick=rows.filter(x=>x.on&&BY[norm(x.name)]);pick.forEach(x=>S.inv.push({id:uid(),n:BY[norm(x.name)].name,m:mutBy[x.mutation]?x.mutation:'Default',t:x.traits||[]}));dl.close();if(pick.length){changed();toast(`Added ${pick.length} to your Dex`)}}})})();
 setInterval(renderPlan,6e4);
 let botInfo=null;async function loadBot(){if(botInfo)return;try{const r=await fetch('/api/discord?bot=1');if(!r.ok)return;botInfo=await r.json();const c=$('#botcard');if(!c||!botInfo.ready||!botInfo.addToServer)return;$('#botsrv').href=botInfo.addToServer;$('#botme').href=botInfo.addToApps;c.hidden=false}catch(e){}}
 addEventListener('hashchange',()=>{if((location.hash||'')==='#plan')loadBot()});if((location.hash||'')==='#plan')setTimeout(loadBot,1500);setTimeout(renderPlan,1500);
@@ -2679,7 +2713,7 @@ trEl(document.body);watch();sel();
 <script>
 /* v6.2 diagnostics shown in the progress (cloud) dialog */
 (function(){function d(){var e=document.getElementById('bkdiag');if(!e)return;var vv=window.visualViewport;var cs=getComputedStyle(document.documentElement);var s=document.getElementById('screen');var r=s?s.getBoundingClientRect():null;
-e.textContent='Build 9.0 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
+e.textContent='Build 9.1 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
 document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('#syncbtn'))setTimeout(d,50)});})();
 </script>
 <script>
