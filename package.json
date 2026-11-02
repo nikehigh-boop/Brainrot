@@ -7,8 +7,9 @@
   },
   "dependencies": {
     "@clerk/backend": "3.23.2",
+    "@runwayml/sdk": "^4.24.0",
+    "@upstash/qstash": "2.12.0",
     "@upstash/redis": "1.39.0",
-    "web-push": "3.6.7",
-    "@upstash/qstash": "2.12.0"
+    "web-push": "3.6.7"
   }
 }

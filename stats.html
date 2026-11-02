@@ -82,6 +82,14 @@ h2{margin:8px 0 0;font-weight:900;font-stretch:120%;font-size:22px}
       <table><thead><tr><th>Day</th><th class="n">Visitors</th><th class="n">Views</th><th class="n">iPhone</th><th class="n">Android</th><th class="n">Desktop</th></tr></thead><tbody id="rows"></tbody></table>
     </div>
   </section>
+  <section id="clips" class="chart">
+    <h2 style="margin:0">Animated cards <span class="sub">made with Runway</span></h2>
+    <p class="sub" style="margin:6px 0 12px">Turns a brainrot's real art into a 5-second loop (Gen-4 Turbo, square) that plays on its Dex page. Each clip uses Runway credits. Uses the stats key above.</p>
+    <div class="row"><input id="cn" placeholder="Brainrot name" value="Gorillatron" aria-label="Brainrot name"></div>
+    <textarea id="cp" rows="4" style="width:100%;margin-top:8px;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit" aria-label="Motion prompt">The gorilla robot character stands in place and idles: slow heavy breathing, shifts its weight, glances left and right, then flexes its big white robotic fist. Soft green rim light pulses gently. Camera completely still, locked-off framing, dark background does not move. Smooth, subtle motion that loops cleanly.</textarea>
+    <div class="row" style="margin-top:8px"><button type="button" id="cgo">Make clip</button><button type="button" class="ghost" id="cchk">Check status</button><span class="sub" id="cst" role="status"></span></div>
+    <video id="cvid" controls loop muted playsinline hidden style="margin-top:12px;width:min(360px,100%);border-radius:18px;background:#000"></video>
+  </section>
 </main>
 <script>
 var K='bd.adminKey',f=document.getElementById('f'),k=document.getElementById('k');
@@ -122,6 +130,27 @@ function renderDemo(d){var m=d.demo||{};
   var h=m.hour||{},hv=[];for(var i=0;i<24;i++)hv.push(+(h[i]||0));var hm=Math.max(1,Math.max.apply(null,hv));
   document.getElementById('hrs').innerHTML=hv.map(function(v,i){return '<div class="bar" title="'+(i%12||12)+(i<12?' am':' pm')+': '+v+'"><i style="height:'+(v/hm*100)+'%"></i><small>'+(i%6?'':(i%12||12)+(i<12?'a':'p'))+'</small></div>'}).join('')}
 f.addEventListener('submit',function(ev){ev.preventDefault();load()});if(k.value)load();
+
+// Animated cards (Runway)
+(function(){var st=document.getElementById('cst'),tm=null;
+  function slug(n){return n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60)}
+  function hdr(){return {Authorization:'Bearer '+k.value.trim(),'Content-Type':'application/json'}}
+  async function check(){var n=document.getElementById('cn').value.trim();if(!n)return;
+    try{var r=await fetch('/api/art/'+slug(n)+'?kind=clip&check=1',{headers:hdr(),cache:'no-store'}),j=await r.json();if(!r.ok)throw new Error(j.error||('Error '+r.status));
+      if(j.status==='DONE'){st.textContent='Done. It now plays on '+n+"'s Dex page.";var v=document.getElementById('cvid');v.src=j.url;v.hidden=false;v.play().catch(function(){});clearInterval(tm);tm=null;return}
+      if(j.status==='FAILED'||j.status==='CANCELLED'){st.textContent='Runway '+j.status.toLowerCase()+(j.failureCode?' ('+j.failureCode+')':'')+'. Nothing was saved.';clearInterval(tm);tm=null;return}
+      if(j.status==='TOO_BIG'){st.textContent='Made, but too big to store ('+Math.round(j.bytes/1048576)+' MB).';clearInterval(tm);tm=null;return}
+      if(j.status==='NONE'){st.textContent='No clip yet.';clearInterval(tm);tm=null;return}
+      st.textContent='Runway: '+j.status.toLowerCase()+(j.progress!=null?' '+Math.round(j.progress*100)+'%':'')+'…'}
+    catch(e){st.textContent=e.message;clearInterval(tm);tm=null}}
+  document.getElementById('cchk').onclick=check;
+  document.getElementById('cgo').onclick=async function(){var n=document.getElementById('cn').value.trim(),b=this;if(!n||!k.value.trim()){st.textContent='Enter the stats key and a brainrot name.';return}
+    if(!confirm('Make a 5-second clip of '+n+'? This uses Runway credits.'))return;
+    b.disabled=true;st.textContent='Starting…';
+    try{var r=await fetch('/api/art/'+slug(n)+'?kind=clip',{method:'POST',headers:hdr(),body:JSON.stringify({name:n,prompt:document.getElementById('cp').value})}),j=await r.json();if(!r.ok)throw new Error(j.error||('Error '+r.status));
+      try{localStorage.setItem(K,k.value.trim())}catch(x){}
+      st.textContent='Started'+(j.credits?' (up to '+j.credits+' credits)':'')+'. Usually takes about a minute…';clearInterval(tm);tm=setInterval(check,6000)}
+    catch(e){st.textContent=e.message}b.disabled=false}})();
 </script>
 </body>
 </html>
