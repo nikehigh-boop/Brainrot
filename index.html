@@ -2254,6 +2254,7 @@ function applyFeed(f){if(!f||typeof f!=='object')return;
   let arted=0;const setArt=(n,u,k)=>{const b=BY[norm(n)];if(!b||!okArt(u)||(IMG[b.name]&&!k))return;IMG[b.name]=u;if(!b.art)b.art='icon';arted++};
   if(Array.isArray(f.brainrots))f.brainrots.forEach(nb=>{if(nb&&typeof nb.name==='string'&&nb.img)setArt(nb.name,nb.img)});
   if(f.art&&typeof f.art==='object')Object.entries(f.art).forEach(([n,u])=>{if(n.includes('|')){const [bn,mn]=n.split('|');const bb=BY[norm(bn)];if(bb&&mutBy[mn]&&okArt(u))MIMG[bb.name+'|'+mn]=u;return}setArt(n,u)});
+  if(f.snd&&typeof f.snd==='object')Object.entries(f.snd).forEach(([n,u])=>{const b=BY[norm(n)];if(b&&typeof u==='string'&&/^\/a\/[0-9a-f]{12}\.mp3$/.test(u))D.snd[b.name]=u});
   if(arted&&!added){render();renderCol()}
   if(f.updated)feedAt=String(f.updated).slice(0,40);
   /* v8.3 · say so when live times haven't been refreshed for a while */
@@ -2513,7 +2514,7 @@ trEl(document.body);watch();sel();
 <script>
 /* v6.2 diagnostics shown in the progress (cloud) dialog */
 (function(){function d(){var e=document.getElementById('bkdiag');if(!e)return;var vv=window.visualViewport;var cs=getComputedStyle(document.documentElement);var s=document.getElementById('screen');var r=s?s.getBoundingClientRect():null;
-e.textContent='Build 8.5.2 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
+e.textContent='Build 8.5.3 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
 document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('#syncbtn'))setTimeout(d,50)});})();
 </script>
 <script>
