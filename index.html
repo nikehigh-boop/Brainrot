@@ -1142,6 +1142,33 @@ nav.tabs a[data-tab="events"] .n{background:transparent;color:var(--live);font-s
   select,input[type=search],input[type=number],input[type=text]{min-height:44px}
   .syncbtn{min-width:44px;min-height:44px}
 }
+
+/* v8.6 · Play Now planner */
+.planbest{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.pcard{position:relative;border-radius:22px;padding:16px 16px 14px;background:linear-gradient(160deg,color-mix(in srgb,var(--pc-c,#c5f33c) 22%,var(--panel2)),var(--deep));border:1px solid color-mix(in srgb,var(--pc-c,#c5f33c) 40%,transparent);display:flex;flex-direction:column;gap:8px;overflow:hidden}
+.pcard .rk{font:700 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--zap)}
+.pcard .tm{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.pcard .tm b{font:900 30px/1 var(--display);font-stretch:120%}
+.pcard .tm span{font:600 13px var(--mono);color:var(--mute)}
+.pcard h3{margin:0;font-size:18px;line-height:1.2}
+.pcard .why{display:flex;flex-wrap:wrap;gap:6px}
+.pcard .why i{font-style:normal;font-size:12px;padding:4px 9px;border-radius:999px;background:rgba(0,0,0,.28);border:1px solid var(--line)}
+.pcard .why i.hot{background:color-mix(in srgb,var(--zap) 18%,transparent);border-color:color-mix(in srgb,var(--zap) 45%,transparent);color:var(--onPc)}
+.pcard .row{margin-top:2px}
+.pcard .btn{min-height:36px;padding:6px 14px;font-size:13px}
+.planmiss{margin:14px 0 0;padding:12px 14px;border-radius:16px;background:var(--panel);border:1px solid var(--line);font-size:14px}
+.ptl{display:flex;flex-direction:column;gap:6px}
+.prow{display:grid;grid-template-columns:76px 28px 1fr auto;gap:10px;align-items:center;padding:9px 12px;border-radius:14px;background:var(--panel);border:1px solid var(--line)}
+.prow.now{border-color:color-mix(in srgb,var(--live) 60%,transparent);background:color-mix(in srgb,var(--live) 10%,var(--panel))}
+.prow .t{font:700 13px var(--mono);color:var(--mute)}
+.prow .ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--sw,#333);font-size:14px}
+.prow .w b{display:block;font-size:14px}
+.prow .w small{color:var(--dim);font-size:12px}
+.prow .sc{font:700 12px var(--mono);color:var(--zap);white-space:nowrap}
+.pday{font:700 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:12px 0 2px}
+.planhint{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:12px 14px;border-radius:16px;text-decoration:none;color:var(--ink);background:linear-gradient(90deg,color-mix(in srgb,var(--zap) 16%,var(--panel2)),var(--panel));border:1px solid color-mix(in srgb,var(--zap) 35%,transparent)}
+.planhint b{color:var(--zap)}
+@media (max-width:720px){.prow{grid-template-columns:62px 26px 1fr;}.prow .sc{grid-column:3;justify-self:start}}
 </style>
 
 <div id="splash" role="img" aria-label="Brainrot Dex is starting">
@@ -1250,6 +1277,7 @@ nav.tabs a[data-tab="events"] .n{background:transparent;color:var(--live);font-s
   <section class="view" id="v-events" hidden>
     <div class="vhead"><div><div class="eyebrow">Live on the island</div><h1>Live &amp; events</h1>
       <p class="lede">Every event on the island with its own timer: what's live, when it ends and when the next one starts. Times are shown in your time zone. Tap a name to open that brainrot.</p></div></div>
+    <a class="planhint" id="planhint" href="#plan" hidden></a>
     <p class="stalenote" id="stalenote" hidden></p>
     <div class="group-h" style="margin-top:0"><h2><i class="dot"></i> Every event</h2><span class="sub" id="livesub"></span></div>
     <div class="evboard" id="evboard"></div>
@@ -1260,6 +1288,15 @@ nav.tabs a[data-tab="events"] .n{background:transparent;color:var(--live);font-s
     <div class="chipwall" id="evlist"></div>
   </section>
 
+
+  <section class="view" id="v-plan" hidden>
+    <div class="vhead"><div><div class="eyebrow">Your next 24 hours</div><h1>Play Now</h1>
+      <p class="lede">The best times to be online, ranked. It weighs every Admin Machine roll (event, boost and traits), each event wave's mutation, Chill Hour and Admin Abuse, plus the mutations you're still missing. Times are in your time zone.</p></div></div>
+    <div class="planbest" id="planbest"></div>
+    <p class="planmiss" id="planmiss" hidden></p>
+    <div class="group-h"><h2>Full timeline</h2><span class="sub">next 24 hours</span></div>
+    <div class="ptl" id="plantl"></div>
+  </section>
   <section class="view" id="v-machines" hidden>
     <div class="vhead"><div><div class="eyebrow">Machines · wheel · guaranteed spawns</div><h1>Machines &amp; odds</h1>
       <p class="lede">Datamined rates from the STB Hub sheet. Names link to their dex entry.</p></div></div>
@@ -1597,7 +1634,7 @@ const addScript=(src,attrs={})=>new Promise((ok,no)=>{const e=document.createEle
   }catch(e){console.warn('auth unavailable',e)}})();
 
 /* Tabs + deep links */
-const TABS=[['dex','Dex',B.length],['collection','Collection',''],['mutations','Mutations',D.mutations.length],['traits','Traits',D.traits.length],['sprites','Sprites',D.sprites.length],['events','Live','●'],['machines','Machines',''],['luck','Luck',''],['rots','Rots',''],['rebirth','Rebirth',20],['tools','Tools',''],['calc','Calculator',''],['codes','Codes',''],['leaks','Leaks',D.leaks.length]];
+const TABS=[['dex','Dex',B.length],['collection','Collection',''],['mutations','Mutations',D.mutations.length],['traits','Traits',D.traits.length],['sprites','Sprites',D.sprites.length],['events','Live','●'],['plan','Play Now','★'],['machines','Machines',''],['luck','Luck',''],['rots','Rots',''],['rebirth','Rebirth',20],['tools','Tools',''],['calc','Calculator',''],['codes','Codes',''],['leaks','Leaks',D.leaks.length]];
 $('#tabs').innerHTML=TABS.map(([id,l,n])=>`<li><a href="#${id}" data-tab="${id}">${l}${n!==''?`<span class="n">${n}</span>`:''}</a></li>`).join('');
 function show(){let h=(location.hash||'#dex').slice(1),deep=null;if(h.startsWith('b-')){deep=SLUG[h.slice(2)];h='dex'}if(!TABS.some(t=>t[0]===h))h='dex';
   $$('.view').forEach(v=>v.hidden=v.id!=='v-'+h);$$('[data-tab]').forEach(a=>{if(a.dataset.tab===h)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
@@ -2442,6 +2479,38 @@ function tickLive(){const now=Date.now();if(now>=renderLive.nx||(renderBoard.nex
 
 /* Boot */
 pulse();render();renderCol();renderEvents();renderLeaks();codes();calc();renderLuck();renderTools();show();
+/* v8.6 · Play Now planner: ranks the next 24 hours */
+function boostScore(b){b=String(b||'');if(/8\s*[×x]\s*Gem/i.test(b))return 6;const l=b.match(/\+?(\d+)\s*Luck Level/i);if(l)return Math.min(6,+l[1]/10);if(/4\s*[×x]\s*Cash/i.test(b))return 3;const c=b.match(/(\d+)\s*[×x]\s*Luck Conveyor/i);if(c)return 1+ +c[1]/2;return b?1:0}
+function missingBy(){const own={};(S.inv||[]).forEach(e=>{(own[e.n]=own[e.n]||new Set()).add(e.m)});const names=Object.keys(own),out={};D.mutations.forEach(m=>{out[m.name]=names.filter(n=>!own[n].has(m.name)).length});return {owned:names.length,miss:out}}
+function planMoments(now){const end=now+24*36e5,M=[],P=missingBy(),pers=mn=>P.owned?Math.min(6,(P.miss[mn]||0)*.25):0;
+  const wavesAt=t=>allWaves().filter(w=>{const x=waveNext(w,t);return x.live}).map(w=>w.mut);
+  allWaves().forEach(w=>{const m=mutBy[w.mut];if(!m)return;const ts=new Set(),d=new Date(now);
+    (w.slots||[]).forEach(hm=>{const [h,mi]=hm.split(':').map(Number);for(let k=-1;k<=2;k++){const t=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()+k,h,mi);if(t+WAVE_NOW>now&&t<end)ts.add(t)}});
+    const n=w.next?Date.parse(w.next):NaN;if(!isNaN(n)&&n+WAVE_NOW>now&&n<end&&![...ts].some(x=>Math.abs(x-n)<6e4))ts.add(n);
+    ts.forEach(t=>M.push({t,end:t+WAVE_NOW,kind:'wave',icon:w.icon||'•',c:m.c,title:`${w.name} wave`,sub:`×${m.m} ${w.mut} mutation`,mut:w.mut,score:m.m+pers(w.mut),why:[`×${m.m} mutation`].concat(P.owned&&P.miss[w.mut]?[`${P.miss[w.mut]} of yours lack ${w.mut}`]:[])}))});
+  rollT().filter(r=>r.t+30*6e4>now&&r.t<end).forEach(r=>{const mn=mutBy[r.event]?r.event:null,m=mn?mutBy[mn]:null,bs=boostScore(r.boost),tr=(r.traits||[]).length,ov=wavesAt(r.t+60e3).map(x=>mutBy[x]?mutBy[x].m:0).reduce((a,b)=>Math.max(a,b),0);
+    const why=[];if(m)why.push(`${r.event} ×${m.m}`);if(r.boost)why.push(r.boost);if(tr)why.push(`${tr} trait${tr>1?'s':''}`);if(ov)why.push(`wave ×${ov} overlaps`);if(mn&&P.owned&&P.miss[mn])why.push(`${P.miss[mn]} of yours lack ${mn}`);
+    M.push({t:r.t,end:r.t+30*6e4,kind:'roll',icon:'🎰',c:m?m.c:'#c5f33c',title:`Admin Machine: ${r.event||'?'}`,sub:[r.boost,tr?(r.traits||[]).join(', '):''].filter(Boolean).join(' · '),score:(m?m.m:4)+bs*2+tr*.8+ov*.3+(mn?pers(mn):0)+4,why,hot:bs>=5})});
+  D.events.forEach(e=>{if(e.waves&&e.waves.length)return;const x=evState(e,now);if(/admin abuse/i.test(e.title)){let t=x&&x.st==='live'?now:x&&x.until&&x.st!=='ended'?x.until:NaN,est=false;if(isNaN(t)){const d=new Date(now);for(let k=0;k<=2&&isNaN(t);k++){const c=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()+k,13,20),wd=new Date(c).getUTCDay();if((wd===6||wd===0)&&c+60*6e4>now)t=c,est=true}}if(!isNaN(t)&&t<end)M.push({t,end:t+60*6e4,kind:'abuse',icon:'😈',c:'#ff5fa2',title:'Admin Abuse show',sub:est?'Usual weekend time (≈), not announced yet':'Biggest spawns of the week',score:99,why:['Rare spawns','Event stacking'],hot:true})}
+    else if(e.daily&&e.daily.length&&e.dur){const d=new Date(now);e.daily.forEach(hm=>{const [h,mi]=hm.split(':').map(Number);for(let k=0;k<=1;k++){const t=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()+k,h,mi);if(t+e.dur*6e4>now&&t<end)M.push({t,end:t+e.dur*6e4,kind:'daily',icon:'🧊',c:'#8fe9ff',title:e.title,sub:e.when||'',score:1.5,why:[`${e.dur} min`]})}})}});
+  return M.sort((a,b)=>a.t-b.t)}
+function icsFor(m){const f=t=>new Date(t).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');const body=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Brainrot Dex//Play Now//EN','BEGIN:VEVENT','UID:'+m.t+'-'+m.kind+'@brainrotdex','DTSTAMP:'+f(Date.now()),'DTSTART:'+f(m.t),'DTEND:'+f(m.end),'SUMMARY:'+('STB: '+m.title).replace(/[,;]/g,' '),'DESCRIPTION:'+(m.why||[]).join(' / ').replace(/[,;]/g,' ')+'  brainrotdex.vercel.app','BEGIN:VALARM','TRIGGER:-PT10M','ACTION:DISPLAY','DESCRIPTION:'+m.title.replace(/[,;]/g,' '),'END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([body],{type:'text/calendar'}));a.download='brainrot-'+m.kind+'.ics';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+function renderPlan(){const now=Date.now(),M=planMoments(now);renderPlan.M=M;const v=$('#v-plan');
+  const best=M.filter(m=>m.kind!=='daily'&&m.end>now).slice().sort((a,b)=>b.score-a.score||a.t-b.t).slice(0,3);
+  const hint=$('#planhint');if(hint){const b=M.filter(m=>m.kind!=='daily'&&m.end>now).sort((a,b)=>b.score-a.score)[0];hint.hidden=!b;if(b)hint.innerHTML=`<span>⭐</span><span>Best window today: <b>${b.t<=now?'Now':tLoc(b.t)}</b> · ${esc(b.title)}</span><span class="sub" style="margin-left:auto">Play Now ›</span>`}
+  if(!v||v.hidden)return;
+  $('#planbest').innerHTML=best.length?best.map((m,i)=>`<article class="pcard" style="--pc-c:${/^#/.test(m.c)?m.c:(String(m.c).match(/#[0-9a-f]{6}/i)||['#c5f33c'])[0]}"><span class="rk">${['Top pick','Runner-up','Also good'][i]||''}</span>
+    <div class="tm"><b>${m.t<=now?'Now':tLoc(m.t)}</b><span>${m.t<=now?'live':`in <span data-until="${m.t}">${hms((m.t-now)/1e3)}</span>`} · ${dLoc(m.t)}</span></div>
+    <h3>${esc(m.icon)} ${esc(m.title)}</h3>${m.sub?`<span class="sub">${esc(m.sub)}</span>`:''}
+    <div class="why">${(m.why||[]).map((w,j)=>`<i class="${j===0||m.hot?'hot':''}">${esc(w)}</i>`).join('')}</div>
+    <div class="row"><button class="btn" type="button" data-ics="${M.indexOf(m)}">Add to calendar</button></div></article>`).join(''):'<p class="sub">Waiting for the next Admin Machine roll to post.</p>';
+  const P=missingBy(),pm=$('#planmiss');if(P.owned){const top=Object.entries(P.miss).filter(([k])=>k!=='Default').sort((a,b)=>b[1]-a[1]).slice(0,3);pm.hidden=false;pm.innerHTML=`You've indexed <b>${P.owned}</b> brainrots. Most-missing mutations: ${top.map(([k,n])=>`<b>${esc(k)}</b> (${n})`).join(', ')}. Windows for those rank higher.`}else{pm.hidden=false;pm.innerHTML='Tip: index your brainrots in the Dex and this plan will rank the mutations you are missing higher.'}
+  let lastDay='';$('#plantl').innerHTML=M.map(m=>{const day=dLoc(m.t),hd=day!==lastDay?`<div class="pday">${esc(day)}</div>`:'';lastDay=day;const live=m.t<=now&&now<m.end;
+    return hd+`<div class="prow${live?' now':''}"><span class="t">${tLoc(m.t)}</span><span class="ic" style="--sw:${/^#/.test(m.c)?m.c:(String(m.c).match(/#[0-9a-f]{6}/i)||['#444'])[0]}">${esc(m.icon)}</span><span class="w"><b>${esc(m.title)}</b>${m.sub?`<small>${esc(m.sub)}</small>`:''}</span><span class="sc">${live?'LIVE':m.kind==='daily'?'':'★'.repeat(Math.max(1,Math.min(5,Math.round(m.score/4))))}</span></div>`}).join('')}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-ics]');if(b&&renderPlan.M){const m=renderPlan.M[+b.dataset.ics];if(m)icsFor(m)}});
+addEventListener('hashchange',()=>{if((location.hash||'')==='#plan')setTimeout(renderPlan,0)});
+setInterval(renderPlan,6e4);setTimeout(renderPlan,1500);
 setInterval(renderCountdowns,6e4);renderLive();setInterval(tickLive,1000);
 })();
 
@@ -2514,7 +2583,7 @@ trEl(document.body);watch();sel();
 <script>
 /* v6.2 diagnostics shown in the progress (cloud) dialog */
 (function(){function d(){var e=document.getElementById('bkdiag');if(!e)return;var vv=window.visualViewport;var cs=getComputedStyle(document.documentElement);var s=document.getElementById('screen');var r=s?s.getBoundingClientRect():null;
-e.textContent='Build 8.5.4 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
+e.textContent='Build 8.6 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
 document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('#syncbtn'))setTimeout(d,50)});})();
 </script>
 <script>
