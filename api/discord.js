@@ -101,6 +101,12 @@ async function sync(origin) {
   const found = msgs.flatMap(rollsFrom)
     .map((r) => ({ ...r, event: NAMES[r.event.toLowerCase()] || r.event }))
     .filter((r) => { const d = new Date(r.at); return hrs.includes(d.getUTCHours()) && d.getUTCMinutes() === 30; });
+  // Archive every roll seen (the feed only keeps the last 12) for the public roll stats.
+  try {
+    const hist = {};
+    for (const r of found) hist['r|' + r.at] = JSON.stringify({ event: r.event, boost: r.boost, traits: r.traits, spawn: r.spawn });
+    if (Object.keys(hist).length) await redis.hset('hist:schedule', hist);
+  } catch {}
   const feed = (await redis.get('feed:live')) || {};
   const live = feed.live || { admin: { hours: [4, 10, 16, 22], minute: 30, rolls: [] } };
   live.admin = live.admin || { hours: [4, 10, 16, 22], minute: 30, rolls: [] };

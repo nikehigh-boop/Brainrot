@@ -17,9 +17,36 @@ async function bundled(req) {
 
 const authorized = (req) => isAdmin(req.headers.authorization);
 
+// Public roll stats from every archived Admin Machine roll (only rolls on the game's fixed :30 slots).
+const SLOTS = [4, 10, 16, 22];
+export function archiveStats(h) {
+  const rolls = [];
+  for (const [k, v] of Object.entries(h || {})) {
+    if (!k.startsWith('r|')) continue;
+    const at = k.slice(2), d = new Date(at);
+    if (isNaN(d) || !SLOTS.includes(d.getUTCHours()) || d.getUTCMinutes() !== 30 || d > Date.now() + 864e5) continue;
+    let r; try { r = typeof v === 'string' ? JSON.parse(v) : v; } catch { continue; }
+    if (!r || !r.event) continue;
+    rolls.push({ at, event: String(r.event).replace(/^dia de muertos$/i, 'Día de Muertos'), boost: r.boost || '', traits: Array.isArray(r.traits) ? r.traits : [] });
+  }
+  rolls.sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+  const past = rolls.filter((r) => Date.parse(r.at) <= Date.now());
+  const tally = (pick) => { const m = {}; past.forEach((r, i) => [].concat(pick(r)).filter(Boolean).forEach((x) => { const o = (m[x] = m[x] || { name: x, n: 0, last: null, ago: 0 }); o.n++; o.last = r.at; o.ago = past.length - 1 - i; })); return Object.values(m).sort((a, b) => b.n - a.n); };
+  const boostKind = (b) => /gem/i.test(b) ? '8× Gem Boost' : /luck level/i.test(b) ? (b.match(/\+?\d+\s*Luck Level/i) || [b])[0].replace(/^(?!\+)/, '+') : /cash/i.test(b) ? '4× Cash Multiplier' : /conveyor/i.test(b) ? (b.match(/\d+\s*[×x]\s*Luck Conveyor/i) || [b])[0] : b;
+  const nTraits = past.reduce((a, r) => a + r.traits.length, 0);
+  const bySlot = SLOTS.map((h) => ({ utc: h, n: past.filter((r) => new Date(r.at).getUTCHours() === h).length, events: tally((r) => (new Date(r.at).getUTCHours() === h ? r.event : null)).slice(0, 3).map((e) => e.name) }));
+  let repeat = 0; for (let i = 1; i < past.length; i++) if (past[i].event === past[i - 1].event) repeat++;
+  return {
+    since: past[0]?.at || null, total: past.length, avgTraits: past.length ? Math.round((nTraits / past.length) * 10) / 10 : 0, repeatRate: past.length > 1 ? Math.round((repeat / (past.length - 1)) * 100) : 0,
+    events: tally((r) => r.event), boosts: tally((r) => boostKind(r.boost)), traits: tally((r) => r.traits).slice(0, 20), slots: bySlot,
+    recent: rolls.slice(-40).reverse(), updated: new Date().toISOString(),
+  };
+}
+
 export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
+      if (req.query && req.query.archive) { res.setHeader('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=3600'); return res.status(200).json(archiveStats((redis && (await redis.hgetall('hist:schedule'))) || {})); }
       if (req.query && req.query.hist && authorized(req)) { res.setHeader('Cache-Control', 'no-store'); return res.status(200).json((redis && (await redis.hgetall('hist:schedule'))) || {}); }
       const doc = (redis && (await redis.get(KEY))) || (await bundled(req));
       res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');

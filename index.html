@@ -1169,6 +1169,25 @@ nav.tabs a[data-tab="events"] .n{background:transparent;color:var(--live);font-s
 .planhint{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:12px 14px;border-radius:16px;text-decoration:none;color:var(--ink);background:linear-gradient(90deg,color-mix(in srgb,var(--zap) 16%,var(--panel2)),var(--panel));border:1px solid color-mix(in srgb,var(--zap) 35%,transparent)}
 .planhint b{color:var(--zap)}
 @media (max-width:720px){.prow{grid-template-columns:62px 26px 1fr;}.prow .sc{grid-column:3;justify-self:start}}
+
+/* v8.7 · roll archive stats */
+.rs-top{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+.rs-k{padding:12px 14px;border-radius:16px;background:var(--panel);border:1px solid var(--line)}
+.rs-k b{display:block;font:900 26px/1.1 var(--display);font-stretch:115%}
+.rs-k span{font-size:12px;color:var(--mute)}
+.rs-bars{display:flex;flex-direction:column;gap:7px}
+.rs-bar{display:grid;grid-template-columns:minmax(96px,150px) 1fr 74px;gap:10px;align-items:center;font-size:13px}
+.rs-bar .tr{height:12px;border-radius:999px;background:var(--deep);overflow:hidden;border:1px solid var(--line)}
+.rs-bar .tr i{display:block;height:100%;border-radius:999px;background:var(--sw,var(--zap))}
+.rs-bar .n{font:600 12px var(--mono);color:var(--mute);text-align:right}
+.rs-bar small{display:block;color:var(--dim);font-size:11px}
+.rs-chips{display:flex;flex-wrap:wrap;gap:6px}
+.rs-chips span{font-size:12px;padding:5px 10px;border-radius:999px;background:var(--panel2);border:1px solid var(--line)}
+.rs-chips span b{color:var(--zap);margin-left:4px;font-family:var(--mono)}
+.rs-rec{width:100%;border-collapse:collapse;font-size:13px}
+.rs-rec td{padding:7px 8px;border-top:1px solid var(--line);vertical-align:top}
+.rs-rec td:first-child{font-family:var(--mono);color:var(--mute);white-space:nowrap}
+details.rs-more{margin-top:14px}details.rs-more summary{cursor:pointer;font-weight:700;padding:8px 0}
 </style>
 
 <div id="splash" role="img" aria-label="Brainrot Dex is starting">
@@ -1304,6 +1323,8 @@ nav.tabs a[data-tab="events"] .n{background:transparent;color:var(--live);font-s
     <div class="cols"><div id="hmach"></div><div class="panel"><h3>How it works</h3><p class="sub">It's a regular machine, not a craft machine. Every new Halloween brainrot comes from it and is limited to the event. Tomb Tomb Tomb Sahur and Witchy Witch roll at lower machine levels.</p></div></div>
     <div class="group-h"><h2>Admin Machine</h2></div><p class="sub" id="adminnote" style="margin:-4px 0 12px"></p>
     <div class="cols" id="admin"></div>
+    <div class="group-h"><h2>Roll history</h2><span class="sub" id="rshead">every Admin Machine roll we've logged</span></div>
+    <div id="rollstats"><p class="sub">Loading the roll archive…</p></div>
     <div class="group-h"><h2>Eternal Machine</h2></div><p class="sub" id="eternalnote" style="margin:-4px 0 12px"></p>
     <div class="tablewrap"><table class="etable" id="eternal"></table></div>
     <div class="cols" style="margin-top:14px" id="eternalspecial"></div>
@@ -2510,6 +2531,19 @@ function renderPlan(){const now=Date.now(),M=planMoments(now);renderPlan.M=M;con
     return hd+`<div class="prow${live?' now':''}"><span class="t">${tLoc(m.t)}</span><span class="ic" style="--sw:${/^#/.test(m.c)?m.c:(String(m.c).match(/#[0-9a-f]{6}/i)||['#444'])[0]}">${esc(m.icon)}</span><span class="w"><b>${esc(m.title)}</b>${m.sub?`<small>${esc(m.sub)}</small>`:''}</span><span class="sc">${live?'LIVE':m.kind==='daily'?'':'★'.repeat(Math.max(1,Math.min(5,Math.round(m.score/4))))}</span></div>`}).join('')}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-ics]');if(b&&renderPlan.M){const m=renderPlan.M[+b.dataset.ics];if(m)icsFor(m)}});
 addEventListener('hashchange',()=>{if((location.hash||'')==='#plan')setTimeout(renderPlan,0)});
+/* v8.7 · roll history from the public archive */
+let RS=null,RSat=0;
+async function loadRollStats(force){if(!force&&RS&&Date.now()-RSat<6e5)return renderRollStats();try{const r=await fetch('/api/feed?archive=1');if(r.ok){RS=await r.json();RSat=Date.now()}}catch(e){}renderRollStats()}
+function renderRollStats(){const el=$('#rollstats');if(!el)return;if(!RS||!RS.total){el.innerHTML='<p class="sub">No rolls archived yet. They are logged automatically as the Admin Machine rolls.</p>';return}
+  const pct=n=>Math.round(n/RS.total*100),mx=a=>Math.max(1,...a.map(x=>x.n)),col=n=>{const m=mutBy[n];return m?(String(m.c).match(/#[0-9a-f]{6}/i)||['#c5f33c'])[0]:'#c5f33c'};
+  const bars=(a,c)=>{const M=mx(a);return `<div class="rs-bars">${a.map(x=>`<div class="rs-bar"><span>${esc(x.name)}<small>${x.ago===0?'last roll':x.ago+' roll'+(x.ago>1?'s':'')+' ago'}</small></span><span class="tr"><i style="width:${Math.max(3,x.n/M*100)}%;--sw:${c?c(x.name):'var(--zap)'}"></i></span><span class="n">${x.n} · ${pct(x.n)}%</span></div>`).join('')}</div>`};
+  const due=RS.events.filter(e=>e.n>=2).slice().sort((a,b)=>b.ago-a.ago)[0];
+  $('#rshead').textContent=`${RS.total} rolls since ${new Date(RS.since).toLocaleDateString([],{month:'short',day:'numeric'})}`;
+  el.innerHTML=`<div class="rs-top"><div class="rs-k"><b>${RS.total}</b><span>rolls logged</span></div><div class="rs-k"><b>${RS.avgTraits}</b><span>traits per roll on average</span></div><div class="rs-k"><b>${RS.repeatRate}%</b><span>same event twice in a row</span></div>${due?`<div class="rs-k"><b>${esc(due.name)}</b><span>longest gap: ${due.ago} rolls since it last came up</span></div>`:''}</div>
+  <div class="cols"><div class="panel"><h3>Events</h3>${bars(RS.events,col)}</div><div class="panel"><h3>Boosts</h3>${bars(RS.boosts)}<h3 style="margin-top:16px">Most common traits</h3><div class="rs-chips">${RS.traits.map(t=>`<span>${esc(t.name)}<b>${pct(t.n)}%</b></span>`).join('')}</div></div></div>
+  <p class="sub" style="margin:10px 0 0">Counts every roll posted to STB Hub's #admin-machine since we started logging. Past rolls don't change future odds; this shows what the machine has actually done.</p>
+  <details class="rs-more"><summary>Last ${RS.recent.length} rolls</summary><table class="rs-rec"><tbody>${RS.recent.map(r=>`<tr><td>${dLoc(Date.parse(r.at))} ${tLoc(Date.parse(r.at))}</td><td><b style="color:${col(r.event)}">${esc(r.event)}</b><br><span class="sub">${esc(r.boost)}</span></td><td class="sub">${esc((r.traits||[]).join(', '))}</td></tr>`).join('')}</tbody></table></details>`}
+addEventListener('hashchange',()=>{if((location.hash||'')==='#machines')loadRollStats()});if((location.hash||'')==='#machines')setTimeout(loadRollStats,1200);
 setInterval(renderPlan,6e4);setTimeout(renderPlan,1500);
 setInterval(renderCountdowns,6e4);renderLive();setInterval(tickLive,1000);
 })();
@@ -2583,7 +2617,7 @@ trEl(document.body);watch();sel();
 <script>
 /* v6.2 diagnostics shown in the progress (cloud) dialog */
 (function(){function d(){var e=document.getElementById('bkdiag');if(!e)return;var vv=window.visualViewport;var cs=getComputedStyle(document.documentElement);var s=document.getElementById('screen');var r=s?s.getBoundingClientRect():null;
-e.textContent='Build 8.6 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
+e.textContent='Build 8.7 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
 document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('#syncbtn'))setTimeout(d,50)});})();
 </script>
 <script>
