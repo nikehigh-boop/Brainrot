@@ -163,7 +163,7 @@ export default async function handler(req, res) {
       if (!ch) return res.status(404).json({ error: `no ${q.ch} channel`, available: Object.keys(map) });
       const n = Math.max(1, Math.min(100, parseInt(q.n, 10) || 30));
       const msgs = await dget(`/channels/${ch.id}/messages?limit=${n}`);
-      return res.status(200).json({ channel: ch, messages: msgs.map(simplify) });
+      return res.status(200).json({ channel: ch, messages: q.raw ? msgs : msgs.map(simplify) });
     }
     return res.status(400).json({ error: 'use ?status=1, ?ch=<name> or ?sync=1' });
   } catch (e) {
