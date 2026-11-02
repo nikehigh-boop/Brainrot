@@ -20,6 +20,7 @@ const authorized = (req) => isAdmin(req.headers.authorization);
 export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
+      if (req.query && req.query.hist && authorized(req)) { res.setHeader('Cache-Control', 'no-store'); return res.status(200).json((redis && (await redis.hgetall('hist:schedule'))) || {}); }
       const doc = (redis && (await redis.get(KEY))) || (await bundled(req));
       res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
       return res.status(200).json(doc);
