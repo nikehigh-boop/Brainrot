@@ -151,7 +151,7 @@ async function dsend(method, path, body) {
   return { ok: r.ok, status: r.status, j };
 }
 export async function setupCommands(origin, force) {
-  if (!force && (await redis.get('discord:cmdv')) === CMDV) return { skipped: true };
+  if (!force && String(await redis.get('discord:cmdv')) === CMDV) return { skipped: true };
   if (!force && !(await redis.set('discord:cmdlock', 1, { nx: true, ex: 1800 }))) return { skipped: 'locked' };
   const me = await dget('/applications/@me');
   const cmds = await dsend('PUT', `/applications/${me.id}/commands`, COMMANDS);
@@ -187,7 +187,7 @@ export default async function handler(req, res) {
     if (q.bot) {
       res.setHeader('Cache-Control', 'public, s-maxage=600');
       const id = (await redis.get('discord:appId')) || (await dget('/applications/@me').then((m) => (redis.set('discord:appId', m.id), m.id)).catch(() => null));
-      return res.status(200).json({ ready: (await redis.get('discord:cmdv')) === CMDV, setup: await redis.get('discord:cmdSetup'), lastSync: await redis.get('discord:lastSync'),
+      return res.status(200).json({ ready: String(await redis.get('discord:cmdv')) === CMDV, setup: await redis.get('discord:cmdSetup'), lastSync: await redis.get('discord:lastSync'),
         addToServer: id ? `https://discord.com/oauth2/authorize?client_id=${id}&scope=applications.commands+bot&permissions=0` : null,
         addToApps: id ? `https://discord.com/oauth2/authorize?client_id=${id}&integration_type=1&scope=applications.commands` : null });
     }
