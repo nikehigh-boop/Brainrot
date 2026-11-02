@@ -9,7 +9,7 @@ import { env } from '../lib/env.js';
 import { isAdmin } from '../lib/admin.js';
 import { scheduleRolls } from '../lib/schedule.js';
 import { sendPersonal, rollPick } from '../lib/push.js';
-import { COMMANDS, CMDV } from '../lib/bot.js';
+import { COMMANDS, CMDV, dex } from '../lib/bot.js';
 
 const API = 'https://discord.com/api/v10';
 export const FEEDS = ['admin-machine', 'info-leaks', 'map-updates', 'brainrot-leaks', 'brainrot-updates', 'lirili-leaks', 'ballerina-events', 'announcements', 'data-sheet', 'general', 'assets'];
@@ -132,6 +132,7 @@ async function sync(origin) {
   const schedule = changed ? await scheduleRolls(live.admin.rolls, origin).catch((e) => ({ error: String(e.message || e) })) : null;
   await redis.set('discord:lastSync', { at: new Date().toISOString(), found: found.length, changed });
   let commands = null; try { commands = await setupCommands(origin); } catch (e) { commands = String(e.message || e); }
+  try { await dex(); } catch {} // keep the slash commands' Dex cache warm (Discord wants a reply within 3 s)
   // Backup for the daily Vercel cron: queue a Gameflip price refresh through QStash when prices are over a day old.
   try {
     const gf = await redis.get('mkt:gf');
