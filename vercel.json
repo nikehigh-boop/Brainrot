@@ -23,6 +23,10 @@
     {
       "source": "/stats",
       "destination": "/stats.html"
+    },
+    {
+      "source": "/overlay",
+      "destination": "/overlay.html"
     }
   ],
   "crons": [

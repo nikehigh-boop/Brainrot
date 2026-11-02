@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brainrot Dex Overlay</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wdth,wght@8..144,25..151,100..1000&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#f4f6ea;--mute:#b9bdab;--zap:#c5f33c;--card:rgba(14,16,12,.82);--line:rgba(255,255,255,.14);--s:1}
+html,body{margin:0;background:transparent;color:var(--ink);font-family:"Roboto Flex",system-ui,sans-serif}
+body.solid{background:#0b0d09}
+.wrap{display:flex;flex-direction:column;gap:calc(8px*var(--s));padding:calc(10px*var(--s));width:max-content;transform-origin:0 0}
+body.row .wrap{flex-direction:row}
+.card{display:flex;align-items:center;gap:calc(12px*var(--s));padding:calc(10px*var(--s)) calc(16px*var(--s)) calc(10px*var(--s)) calc(10px*var(--s));border-radius:calc(18px*var(--s));background:var(--card);border:1px solid var(--line);box-shadow:0 6px 24px rgba(0,0,0,.35);min-width:calc(300px*var(--s));position:relative;overflow:hidden}
+.card::before{content:"";position:absolute;inset:0 auto 0 0;width:calc(5px*var(--s));background:var(--c,var(--zap))}
+.ic{width:calc(46px*var(--s));height:calc(46px*var(--s));border-radius:calc(12px*var(--s));display:grid;place-items:center;font-size:calc(24px*var(--s));background:var(--c,var(--zap));flex:none;margin-left:calc(6px*var(--s))}
+.k{font:700 calc(11px*var(--s))/1 "Roboto Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.t{font:900 calc(21px*var(--s))/1.15 "Roboto Flex";font-stretch:115%;margin:calc(3px*var(--s)) 0}
+.d{font-size:calc(13px*var(--s));color:var(--mute);max-width:calc(320px*var(--s));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cd{margin-left:auto;padding-left:calc(14px*var(--s));text-align:right}
+.cd b{display:block;font:700 calc(24px*var(--s))/1 "Roboto Mono",monospace;color:var(--zap)}
+.cd span{font-size:calc(11px*var(--s));color:var(--mute)}
+.live .cd b{color:#ff5f5f}
+.brand{font:700 calc(10px*var(--s)) "Roboto Mono",monospace;letter-spacing:.14em;color:var(--mute);opacity:.8;padding-left:calc(4px*var(--s))}
+.brand i{font-style:normal;color:var(--zap)}
+/* setup page when opened without parameters in a normal browser */
+.setup{max-width:640px;margin:40px auto;padding:0 16px;font-size:15px;line-height:1.5}
+.setup h1{font-stretch:120%;font-weight:900}.setup code{font:600 13px "Roboto Mono";background:#1d2118;padding:3px 7px;border-radius:6px;word-break:break-all}
+.setup label{display:flex;gap:8px;align-items:center;margin:6px 0}.setup .box{background:#15180f;border:1px solid var(--line);border-radius:14px;padding:14px;margin:14px 0}
+.setup input[type=range]{width:200px}
+.setup+.wrap{margin:0 auto 40px}
+</style></head>
+<body>
+<div class="wrap" id="w"></div>
+<script id="muts" type="application/json">{"Default": [1, "#6d6489"], "Gold": [2, "#f5c542"], "Diamond": [3, "#8fe9ff"], "Galaxy": [4, "linear-gradient(135deg,#2a1b6e,#7a4dff,#e26bff)"], "Zombie": [5, "#73c23d"], "Dreamy": [6, "linear-gradient(135deg,#ffc2f4,#b9a6ff)"], "Ice & Fire": [7, "linear-gradient(135deg,#5fd4ff 50%,#ff5a1f 50%)"], "Carnival": [8, "linear-gradient(135deg,#ff3d6e,#ffd23f,#2bd9a0)"], "Aqua": [9, "#1fc7d4"], "Neon": [9.5, "#3bff9a"], "Rainbow": [10, "linear-gradient(135deg,#ff4545,#ffd21f,#36c46a,#1ea7e0,#b45cff)"], "Halloween": [10, "#ff8a00"], "Chocolate": [10.5, "#7b4a2e"], "Lovely": [10.5, "#ff5fa2"], "Darkness": [11, "#3b2d63"], "Toxic": [11, "#a8ff1a"], "Christmas": [12, "linear-gradient(135deg,#e63946 50%,#2a9d55 50%)"], "Rave": [12, "linear-gradient(135deg,#ff2bd6,#2bd9ff)"], "Heaven": [12.5, "#fff1b8"], "Void": [13, "#2b0a4d"], "Crystal": [13, "linear-gradient(135deg,#d8f6ff,#9fd8ff,#f0c8ff)"], "Gothic": [13, "#6b1238"], "Football": [13, "#3c8d2f"], "Magical": [13.5, "#c77dff"], "Summer": [13.5, "#ffb703"], "Jungle": [14, "#1f7a3a"], "Spooky": [15, "#ff5e00"], "Día de Muertos": [15, "#ff4fa3"]}</script>
+<script>
+const Q=new URLSearchParams(location.search),MU=JSON.parse(document.getElementById('muts').textContent);
+const SHOW=(Q.get('show')||'roll,wave,plan').split(',').map(x=>x.trim()),SC=Math.max(.5,Math.min(3,+Q.get('scale')||1));
+document.documentElement.style.setProperty('--s',SC);if(Q.get('layout')==='row')document.body.classList.add('row');if(Q.get('bg')==='solid')document.body.classList.add('solid');
+const hex=c=>(String(c||'').match(/#[0-9a-f]{6}/i)||['#c5f33c'])[0],esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cd=s=>{s=Math.max(0,Math.floor(s/1e3));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0')};
+const tl=t=>new Date(t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+let F=null;
+async function load(){try{const r=await fetch('/api/feed',{cache:'no-store'});if(r.ok)F=await r.json()}catch(e){}}
+function waves(now){const out=[];(F&&F.events||[]).forEach(e=>(e.waves||[]).forEach(w=>{const d=new Date(now),seen=[];const add=t=>{if(t+15*6e4>now&&!seen.some(x=>Math.abs(x-t)<6e4)){seen.push(t);out.push({t,w})}};
+  if(w.next)add(Date.parse(w.next));for(let k=-1;k<=2;k++)(w.slots||[]).forEach(hm=>{const [h,m]=hm.split(':').map(Number);add(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()+k,h,m))})}));return out.sort((a,b)=>a.t-b.t)}
+function rolls(){return ((F&&F.live&&F.live.admin&&F.live.admin.rolls)||[]).map(r=>({...r,t:Date.parse(r.at)})).sort((a,b)=>a.t-b.t)}
+const bs=b=>{b=String(b||'');if(/8\s*[×x]\s*Gem/i.test(b))return 6;const l=b.match(/(\d+)\s*Luck Level/i);if(l)return Math.min(6,+l[1]/10);if(/Cash/i.test(b))return 3;return b?1.5:0};
+function card(o){return `<div class="card ${o.live?'live':''}" style="--c:${o.c}"><div class="ic">${o.icon}</div><div><div class="k">${esc(o.k)}</div><div class="t">${esc(o.t)}</div>${o.d?`<div class="d">${esc(o.d)}</div>`:''}</div><div class="cd"><b>${o.live?'LIVE':cd(o.at-Date.now())}</b><span>${o.live?'ends '+tl(o.end):tl(o.at)}</span></div></div>`}
+function render(){const now=Date.now(),H=[];if(!F){document.getElementById('w').innerHTML='';return}
+  const R=rolls(),nr=R.find(r=>r.t>now-60e3);
+  if(SHOW.includes('roll')&&nr){const m=MU[nr.event];H.push(card({k:'Admin Machine',t:`${nr.event}${m?' ×'+m[0]:''}`,d:[nr.boost,(nr.traits||[]).join(', ')].filter(Boolean).join(' · '),icon:'🎰',c:hex(m&&m[1]),at:nr.t}))}
+  const W=waves(now),lw=W.find(x=>x.t<=now),nw=W.find(x=>x.t>now);
+  if(SHOW.includes('wave')){const x=lw||nw;if(x){const m=MU[x.w.mut];H.push(card({k:lw?'Wave live now':'Next wave',t:`${x.w.name}${m?' ×'+m[0]:''}`,d:lw&&nw?`Then ${nw.w.name} at ${tl(nw.t)}`:'',icon:x.w.icon||'🌊',c:hex(m&&m[1]),at:x.t,live:!!lw,end:x.t+15*6e4}))}}
+  if(SHOW.includes('plan')){const M=[];W.filter(x=>x.t>now&&x.t<now+864e5).forEach(x=>{const m=MU[x.w.mut];M.push({s:m?m[0]:1,t:x.t,l:x.w.name+' wave',c:m&&m[1],icon:x.w.icon||'🌊',d:m?'×'+m[0]+' '+x.w.mut:''})});
+    R.filter(r=>r.t>now&&r.t<now+864e5).forEach(r=>{const m=MU[r.event];M.push({s:(m?m[0]:4)+bs(r.boost)*2+(r.traits||[]).length*.8+4,t:r.t,l:'Admin Machine: '+r.event,c:m&&m[1],icon:'⭐',d:r.boost||''})});
+    const b=M.sort((a,b)=>b.s-a.s)[0];if(b&&!(SHOW.includes('roll')&&nr&&b.t===nr.t))H.push(card({k:'Best window today',t:b.l,d:b.d,icon:'⭐',c:hex(b.c),at:b.t}))}
+  if(Q.get('brand')!=='0')H.push('<div class="brand">BRAINROT<i>DEX</i> · brainrotdex.vercel.app</div>');
+  document.getElementById('w').innerHTML=H.join('')}
+function setup(){const base=location.origin+location.pathname.replace(/\.html$/,'');document.body.classList.add('solid');document.body.insertAdjacentHTML('afterbegin',`<div class="setup"><h1>Stream overlay</h1>
+<p>Live Admin Machine roll, event wave and best-window countdowns for OBS, Streamlabs or TikTok Live Studio. Add a <b>Browser Source</b> with this URL, about 560 × 300:</p>
+<div class="box"><label><input type="checkbox" data-o="roll" checked> Admin Machine roll</label><label><input type="checkbox" data-o="wave" checked> Event wave</label><label><input type="checkbox" data-o="plan" checked> Best window today</label>
+<label><input type="checkbox" id="row"> Side by side</label><label>Size <input type="range" id="sc" min="0.6" max="2" step="0.1" value="1"> <span id="scv">1×</span></label></div>
+<p><code id="url"></code></p><p style="color:#b9bdab">Preview below. The background is transparent in OBS.</p></div>`);
+  const up=()=>{const s=[...document.querySelectorAll('[data-o]')].filter(i=>i.checked).map(i=>i.dataset.o).join(',');const sc=document.getElementById('sc').value;document.getElementById('scv').textContent=sc+'×';
+    const u=base+'?show='+s+(sc!=='1'?'&scale='+sc:'')+(document.getElementById('row').checked?'&layout=row':'');document.getElementById('url').textContent=u;
+    SHOW.length=0;s.split(',').forEach(x=>SHOW.push(x));document.documentElement.style.setProperty('--s',sc);document.body.classList.toggle('row',document.getElementById('row').checked);render()};
+  document.querySelectorAll('.setup input').forEach(i=>i.addEventListener('input',up));up()}
+if(![...Q.keys()].length)setup();
+load().then(render);setInterval(render,1000);setInterval(load,6e4);
+</script></body></html>
