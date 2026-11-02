@@ -78,7 +78,7 @@ export function parseRoll(text) {
   const traits = [...t.matchAll(/<a?:(\w+):\d+>/g)].map((m) => traitName(m[1])).filter(Boolean);
   const boostLine = t.split('\n').find((l) => /(Luck|Cash|Gem|Conveyor|Multiplier|Money)/i.test(l.replace(/<a?:\w+:\d+>/g, '')) && /\d/.test(l.replace(/<a?:\w+:\d+>|<t:\d+(?::\w)?>/g, '')));
   const boost = boostLine ? boostLine.replace(/<a?:\w+:\d+>/g, '').replace(/[*_`]/g, '').trim().replace(/(\d)x\b/gi, '$1×') : '';
-  const sp = t.match(/after\s+(?:(\d+)\s*m)?\s*(\d+)\s*s/i);
+  const sp = t.replace(/[*_`]/g, '').match(/after\s+(?:(\d+)\s*m)?\s*(\d+)\s*s/i);
   return { at: iso(ts[1]).replace('.000Z', 'Z'), event: ev[1].replace(/[*_`]/g, '').trim(), boost, traits: [...new Set(traits)], spawn: sp ? (+(sp[1] || 0)) * 60 + (+sp[2]) : null };
 }
 function rollsFrom(m) {
@@ -137,6 +137,14 @@ export default async function handler(req, res) {
       return res.status(200).json(await sync(origin));
     }
     if (!admin) return res.status(401).json({ error: 'unauthorized' });
+    if (q.schedule && req.method === 'POST') {
+      // Upsert a QStash schedule that calls ?sync=1 every 10 minutes.
+      const token = env('QSTASH_TOKEN');
+      if (!token) return res.status(503).json({ error: 'qstash not connected' });
+      const base = (env('QSTASH_URL') || 'https://qstash.upstash.io').replace(/\/$/, '');
+      const r = await fetch(`${base}/v2/schedules/${origin}/api/discord?sync=1`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Upstash-Cron': String(q.cron || '*/10 * * * *'), 'Upstash-Schedule-Id': 'discord-sync', 'Upstash-Retries': '0', 'Upstash-Method': 'POST' } });
+      return res.status(r.ok ? 200 : 502).json({ ok: r.ok, qstash: await r.json().catch(() => null) });
+    }
     if (q.brand && req.method === 'POST') {
       // One-time: give the bot and its app the Brainrot Dex icon.
       if (!env('DISCORD_BOT_TOKEN')) return res.status(503).json({ error: 'DISCORD_BOT_TOKEN is not set' });
