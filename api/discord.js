@@ -154,7 +154,8 @@ export default async function handler(req, res) {
     }
     if (q.status) {
       const map = await channels(true);
-      return res.status(200).json({ guilds: lastGuilds, channels: map, missing: FEEDS.filter((f) => !map[f]), lastSync: await redis.get('discord:lastSync') });
+      const me = await dget('/users/@me');
+      return res.status(200).json({ bot: me.username, invite: `https://discord.com/oauth2/authorize?client_id=${me.id}&scope=bot&permissions=66560`, guilds: lastGuilds, channels: map, missing: FEEDS.filter((f) => !map[f]), lastSync: await redis.get('discord:lastSync') });
     }
     if (q.ch) {
       const map = await channels();
