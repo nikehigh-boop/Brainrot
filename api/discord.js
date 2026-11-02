@@ -21,12 +21,16 @@ async function dget(path) {
   return r.json();
 }
 
+let lastGuilds = null;
 // Feed channel ids by name, found in the servers the bot is in (cached 1 hour).
 async function channels(fresh) {
   if (!fresh && redis) { const c = await redis.get('discord:channels'); if (c) return c; }
   const map = {};
+  lastGuilds = [];
   for (const g of await dget('/users/@me/guilds')) {
-    for (const ch of await dget(`/guilds/${g.id}/channels`)) {
+    const list = await dget(`/guilds/${g.id}/channels`);
+    lastGuilds.push({ name: g.name, channels: list.filter((c) => [0, 5].includes(c.type)).map((c) => c.name) });
+    for (const ch of list) {
       if (![0, 5].includes(ch.type)) continue; // text or announcement
       const name = String(ch.name || '').toLowerCase();
       const key = FEEDS.find((f) => name.includes(f));
@@ -150,9 +154,7 @@ export default async function handler(req, res) {
     }
     if (q.status) {
       const map = await channels(true);
-      const guilds = [];
-      for (const g of await dget('/users/@me/guilds')) guilds.push({ name: g.name, channels: (await dget(`/guilds/${g.id}/channels`)).filter((c) => [0, 5].includes(c.type)).map((c) => c.name) });
-      return res.status(200).json({ guilds, channels: map, missing: FEEDS.filter((f) => !map[f]), lastSync: await redis.get('discord:lastSync') });
+      return res.status(200).json({ guilds: lastGuilds, channels: map, missing: FEEDS.filter((f) => !map[f]), lastSync: await redis.get('discord:lastSync') });
     }
     if (q.ch) {
       const map = await channels();
