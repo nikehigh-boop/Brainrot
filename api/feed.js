@@ -30,14 +30,6 @@ export default async function handler(req, res) {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
       if (!body || typeof body !== 'object' || Array.isArray(body)) return res.status(400).json({ error: 'send a JSON object' });
       const prev = (await redis.get(KEY)) || (await bundled(req));
-      // Fixed schedules anchored to a time zone (Admin Machine clock, Chill Hour) keep their anchor:
-      // an update that sends plain UTC hours for them (e.g. from an older copy) doesn't undo it.
-      const pa = prev?.live?.admin;
-      if (pa?.tz && body.live?.admin && !body.live.admin.tz) body.live = { ...body.live, admin: { ...body.live.admin, hours: pa.hours, minute: pa.minute, tz: pa.tz } };
-      if (Array.isArray(body.events)) {
-        const pz = new Map((prev?.events || []).filter((e) => e && e.tz && Array.isArray(e.daily)).map((e) => [e.title, e]));
-        body.events = body.events.map((e) => (e && !e.tz && Array.isArray(e.daily) && pz.has(e.title) ? { ...e, daily: pz.get(e.title).daily, tz: pz.get(e.title).tz } : e));
-      }
       const doc = { ...prev, ...body };
       if ((body.live || body.events) && !body.liveAt) doc.liveAt = new Date().toISOString(); // when live times were last refreshed
       await redis.set(KEY, doc);
