@@ -133,6 +133,19 @@ export default async function handler(req, res) {
       return res.status(200).json(await sync(origin));
     }
     if (!admin) return res.status(401).json({ error: 'unauthorized' });
+    if (q.brand && req.method === 'POST') {
+      // One-time: give the bot and its app the Brainrot Dex icon.
+      if (!env('DISCORD_BOT_TOKEN')) return res.status(503).json({ error: 'DISCORD_BOT_TOKEN is not set' });
+      const img = await fetch(`${origin}/icon-512.png`);
+      if (!img.ok) return res.status(502).json({ error: 'icon not found' });
+      const uri = 'data:image/png;base64,' + Buffer.from(await img.arrayBuffer()).toString('base64');
+      const out = {};
+      for (const [k, path, body] of [['avatar', '/users/@me', { avatar: uri }], ['appIcon', '/applications/@me', { icon: uri }]]) {
+        const r = await fetch(API + path, { method: 'PATCH', headers: { Authorization: `Bot ${env('DISCORD_BOT_TOKEN')}`, 'Content-Type': 'application/json', 'User-Agent': 'BrainrotDex (https://brainrotdex.vercel.app, 1.0)' }, body: JSON.stringify(body) });
+        out[k] = r.ok ? 'ok' : `${r.status} ${(await r.text()).slice(0, 160)}`;
+      }
+      return res.status(200).json(out);
+    }
     if (q.status) {
       const map = await channels(true);
       return res.status(200).json({ channels: map, missing: FEEDS.filter((f) => !map[f]), lastSync: await redis.get('discord:lastSync') });
