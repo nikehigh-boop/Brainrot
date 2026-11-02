@@ -9,6 +9,7 @@ import { env } from '../lib/env.js';
 import { isAdmin } from '../lib/admin.js';
 import { scheduleRolls } from '../lib/schedule.js';
 import { sendPersonal, rollPick } from '../lib/push.js';
+import { COMMANDS, CMDV } from '../lib/bot.js';
 
 const API = 'https://discord.com/api/v10';
 export const FEEDS = ['admin-machine', 'info-leaks', 'map-updates', 'brainrot-leaks', 'brainrot-updates', 'lirili-leaks', 'ballerina-events', 'announcements', 'data-sheet', 'general', 'assets'];
@@ -130,6 +131,7 @@ async function sync(origin) {
   if (fresh.length) { try { mine = []; for (const r of fresh) mine.push(await sendPersonal(rollPick(r), origin)); } catch (e) { mine = String(e.message || e); } }
   const schedule = changed ? await scheduleRolls(live.admin.rolls, origin).catch((e) => ({ error: String(e.message || e) })) : null;
   await redis.set('discord:lastSync', { at: new Date().toISOString(), found: found.length, changed });
+  let commands = null; try { commands = await setupCommands(origin); } catch (e) { commands = String(e.message || e); }
   // Backup for the daily Vercel cron: queue a Gameflip price refresh through QStash when prices are over a day old.
   try {
     const gf = await redis.get('mkt:gf');
@@ -139,7 +141,27 @@ async function sync(origin) {
       await fetch(`${base}/v2/publish/${origin}/api/market?sync=gameflip`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Upstash-Method': 'GET', 'Upstash-Retries': '1' } });
     }
   } catch {}
-  return { ok: true, found: found.length, changed, schedule, mine };
+  return { ok: true, found: found.length, changed, schedule, mine, commands };
+}
+
+// One-time (per command version) setup of the public slash commands and the interactions endpoint.
+async function dsend(method, path, body) {
+  const r = await fetch(API + path, { method, headers: { Authorization: `Bot ${env('DISCORD_BOT_TOKEN')}`, 'Content-Type': 'application/json', 'User-Agent': 'BrainrotDex (https://brainrotdex.vercel.app, 1.0)' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => null);
+  return { ok: r.ok, status: r.status, j };
+}
+export async function setupCommands(origin, force) {
+  if (!force && (await redis.get('discord:cmdv')) === CMDV) return { skipped: true };
+  if (!force && !(await redis.set('discord:cmdlock', 1, { nx: true, ex: 1800 }))) return { skipped: 'locked' };
+  const me = await dget('/applications/@me');
+  const cmds = await dsend('PUT', `/applications/${me.id}/commands`, COMMANDS);
+  let app = await dsend('PATCH', '/applications/@me', { interactions_endpoint_url: `${origin}/api/interactions`,
+    integration_types_config: { 0: { oauth2_install_params: { scopes: ['applications.commands', 'bot'], permissions: '0' } }, 1: { oauth2_install_params: { scopes: ['applications.commands'], permissions: '0' } } } });
+  if (!app.ok) app = await dsend('PATCH', '/applications/@me', { interactions_endpoint_url: `${origin}/api/interactions` });
+  const out = { at: new Date().toISOString(), commands: cmds.ok ? (cmds.j || []).length : { status: cmds.status, err: cmds.j }, endpoint: app.ok ? 'set' : { status: app.status, err: app.j }, public: me.bot_public };
+  await redis.set('discord:cmdSetup', out);
+  if (cmds.ok && app.ok) await redis.set('discord:cmdv', CMDV);
+  return out;
 }
 
 async function qstashOk(req) {
@@ -161,6 +183,13 @@ export default async function handler(req, res) {
     if (q.sync) {
       if (!admin && !(await qstashOk(req))) return res.status(401).json({ error: 'unauthorized' });
       return res.status(200).json(await sync(origin));
+    }
+    if (q.bot) {
+      res.setHeader('Cache-Control', 'public, s-maxage=600');
+      const id = (await redis.get('discord:appId')) || (await dget('/applications/@me').then((m) => (redis.set('discord:appId', m.id), m.id)).catch(() => null));
+      return res.status(200).json({ ready: (await redis.get('discord:cmdv')) === CMDV, setup: await redis.get('discord:cmdSetup'), lastSync: await redis.get('discord:lastSync'),
+        addToServer: id ? `https://discord.com/oauth2/authorize?client_id=${id}&scope=applications.commands+bot&permissions=0` : null,
+        addToApps: id ? `https://discord.com/oauth2/authorize?client_id=${id}&integration_type=1&scope=applications.commands` : null });
     }
     if (!admin) return res.status(401).json({ error: 'unauthorized' });
     if (q.schedule && req.method === 'POST') {

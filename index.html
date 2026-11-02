@@ -1209,6 +1209,10 @@ details.rs-more{margin-top:14px}details.rs-more summary{cursor:pointer;font-weig
 .almuts button i{width:9px;height:9px;border-radius:3px;background:var(--sw)}
 .almuts button[aria-pressed="true"]{color:var(--ink);border-color:color-mix(in srgb,var(--zap) 60%,transparent);background:color-mix(in srgb,var(--zap) 16%,var(--panel2))}
 .almuts .lbl{width:100%;font-size:12px;color:var(--dim)}
+
+/* v9.0 · discord bot card */
+.botcard{margin-top:22px;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:16px 18px;border-radius:20px;background:linear-gradient(120deg,color-mix(in srgb,#5865f2 26%,var(--panel2)),var(--panel));border:1px solid color-mix(in srgb,#5865f2 45%,transparent)}
+.botcard h3{margin:2px 0 6px}.botcard .sub{margin:0;max-width:56ch}.botcard code{font:600 12px var(--mono);padding:2px 6px;border-radius:6px;background:rgba(0,0,0,.3)}
 </style>
 
 <div id="splash" role="img" aria-label="Brainrot Dex is starting">
@@ -1337,6 +1341,9 @@ details.rs-more{margin-top:14px}details.rs-more summary{cursor:pointer;font-weig
     <p class="planmiss" id="planmiss" hidden></p>
     <div class="group-h"><h2>Full timeline</h2><span class="sub">next 24 hours</span></div>
     <div class="ptl" id="plantl"></div>
+    <div class="botcard" id="botcard" hidden><div><div class="eyebrow">Discord bot</div><h3>Ask the Dex in Discord</h3>
+      <p class="sub"><code>/roll</code> <code>/waves</code> <code>/when</code> <code>/plan</code> <code>/price</code> <code>/brainrot</code> <code>/codes</code>, with times in everyone's own time zone. Add it to your server, or to your account to use it anywhere.</p></div>
+      <div class="row"><a class="btn primary" id="botsrv" target="_blank" rel="noopener">Add to a server</a><a class="btn" id="botme" target="_blank" rel="noopener">Add to my apps</a></div></div>
   </section>
   <section class="view" id="v-machines" hidden>
     <div class="vhead"><div><div class="eyebrow">Machines · wheel · guaranteed spawns</div><h1>Machines &amp; odds</h1>
@@ -2596,7 +2603,9 @@ function renderRollStats(){const el=$('#rollstats');if(!el)return;if(!RS||!RS.to
   <p class="sub" style="margin:10px 0 0">Counts every roll posted to STB Hub's #admin-machine since we started logging. Past rolls don't change future odds; this shows what the machine has actually done.</p>
   <details class="rs-more"><summary>Last ${RS.recent.length} rolls</summary><table class="rs-rec"><tbody>${RS.recent.map(r=>`<tr><td>${dLoc(Date.parse(r.at))} ${tLoc(Date.parse(r.at))}</td><td><b style="color:${col(r.event)}">${esc(r.event)}</b><br><span class="sub">${esc(r.boost)}</span></td><td class="sub">${esc((r.traits||[]).join(', '))}</td></tr>`).join('')}</tbody></table></details>`}
 addEventListener('hashchange',()=>{if((location.hash||'')==='#machines')loadRollStats()});if((location.hash||'')==='#machines')setTimeout(loadRollStats,1200);
-setInterval(renderPlan,6e4);setTimeout(renderPlan,1500);
+setInterval(renderPlan,6e4);
+let botInfo=null;async function loadBot(){if(botInfo)return;try{const r=await fetch('/api/discord?bot=1');if(!r.ok)return;botInfo=await r.json();const c=$('#botcard');if(!c||!botInfo.ready||!botInfo.addToServer)return;$('#botsrv').href=botInfo.addToServer;$('#botme').href=botInfo.addToApps;c.hidden=false}catch(e){}}
+addEventListener('hashchange',()=>{if((location.hash||'')==='#plan')loadBot()});if((location.hash||'')==='#plan')setTimeout(loadBot,1500);setTimeout(renderPlan,1500);
 setInterval(renderCountdowns,6e4);renderLive();setInterval(tickLive,1000);
 })();
 
@@ -2669,7 +2678,7 @@ trEl(document.body);watch();sel();
 <script>
 /* v6.2 diagnostics shown in the progress (cloud) dialog */
 (function(){function d(){var e=document.getElementById('bkdiag');if(!e)return;var vv=window.visualViewport;var cs=getComputedStyle(document.documentElement);var s=document.getElementById('screen');var r=s?s.getBoundingClientRect():null;
-e.textContent='Build 8.9 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
+e.textContent='Build 9.0 · view '+innerWidth+'×'+innerHeight+(vv?' · visible '+Math.round(vv.width)+'×'+Math.round(vv.height):'')+' · screen '+screen.width+'×'+screen.height+' · app height '+(cs.getPropertyValue('--appH')||'-').trim()+(r?' · screen area '+Math.round(r.top)+'–'+Math.round(r.bottom):'')+' · Home Screen '+(navigator.standalone===true?'yes':'no')}
 document.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('#syncbtn'))setTimeout(d,50)});})();
 </script>
 <script>
