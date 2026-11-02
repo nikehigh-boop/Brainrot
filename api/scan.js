@@ -56,7 +56,12 @@ Reply with JSON only, no other text: {"found":[{"name":"...","mutation":"...","t
     headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
     body: JSON.stringify({ model: env('SCAN_MODEL') || 'claude-sonnet-5-5', max_tokens: 1500, messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: type, data } }, { type: 'text', text: prompt }] }] }),
   });
-  if (!r.ok) return res.status(502).json({ error: 'The scanner is unavailable right now.', status: r.status });
+  if (!r.ok) {
+    const e = await r.json().catch(() => ({}));
+    const msg = String((e.error && e.error.message) || '');
+    if (redis) await redis.set('scan:lastError', { at: new Date().toISOString(), status: r.status, type: e.error && e.error.type, msg: msg.slice(0, 300) }, { ex: 7 * 86400 });
+    return res.status(502).json({ error: /credit balance/i.test(msg) ? 'The scanner is out of credit right now.' : 'The scanner is unavailable right now.', status: r.status, reason: (e.error && e.error.type) || null, detail: msg.slice(0, 200) });
+  }
   const j = await r.json();
   const text = (j.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
   let out = []; try { out = JSON.parse((text.match(/\{[\s\S]*\}/) || ['{}'])[0]).found || []; } catch {}
